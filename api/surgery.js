@@ -118,7 +118,7 @@ router.post(
 			for (let i = 0; i < surgeryTeam.length; i++) {
 				console.log(surgeryTeam[i]);
 				const doctor = await Doctor.findOne({
-					username: surgeryTeam[i].username,
+					username: surgeryTeam[i].memberUsername,
 				});
 				if (doctor) {
 					if (doctor.username !== noteUser.username) {
@@ -131,8 +131,8 @@ router.post(
 						await doctor.save();
 
 						teamMembers.push({
-							username: surgeryTeam[i].username,
-							role: surgeryTeam[i].role,
+							username: surgeryTeam[i].memberUsername,
+							role: surgeryTeam[i].memberRole,
 							status: "pending",
 							doctorId: doctor._id,
 							doctorName: doctor.name,
@@ -148,8 +148,8 @@ router.post(
 						await doctor.save();
 
 						teamMembers.push({
-							username: surgeryTeam[i].username,
-							role: surgeryTeam[i].role,
+							username: surgeryTeam[i].memberUsername,
+							role: surgeryTeam[i].memberRole,
 							status: "accepted",
 							doctorId: doctor._id,
 							doctorName: doctor.name,
