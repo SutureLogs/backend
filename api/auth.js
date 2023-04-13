@@ -28,7 +28,7 @@ router.post("/login", async (req, res) => {
 				.json({ message: "Invalid username or password" });
 		}
 		const token = jwt.sign({ id: doctor._id }, "myprecious");
-		res.status(200).json({ status: "success", token });
+		res.status(200).json({ status: "success", token, id: doctor._id, name: doctor.name});
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
