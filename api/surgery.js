@@ -52,6 +52,7 @@ router.get("/loglog", async (req, res) => {
 		date : surgery.surgeryDate,
 		surgeryName : surgery.surgeryTitle,
 		vitals : surgery.vitals,
+		vitalTimestamps: surgery.vitalTimestamps,
 		transcript : surgery.transcript,
 		transcribeProcess : surgery.transcribeProcess,
 	}
@@ -172,7 +173,8 @@ router.post(
 					});
 			});
 			const vitalsObj = await vitalsPromise;
-			surgeryLog.vitals = vitalsObj;
+			surgeryLog.vitals = vitalsObj.vitals;
+			surgeryLog.vitalTimestamps = vitalsObj.timestamp;
 
 			await surgeryLog.save();
 			res.status(200).json({ status: "success", surgeryLog });

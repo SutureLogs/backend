@@ -4,11 +4,13 @@ const fs = require('fs');
 function vitalParser(filePath) {
   return new Promise((resolve, reject) => {
     const vitals = [];
+    const timestamp = [];
 
     fs.createReadStream(filePath)
       .pipe(csv())
       .on('data', (data) => {
         const keys = Object.keys(data);
+        timestamp.push(parseInt(data['Timestamp']));
 
         for (let i = 1; i < keys.length; i++) {
           const key = keys[i];
@@ -30,7 +32,8 @@ function vitalParser(filePath) {
         }
       })
       .on('end', () => {
-        resolve(vitals);
+        const final = {vitals, timestamp};
+        resolve(final);
       })
       .on('error', (error) => {
         reject(error);

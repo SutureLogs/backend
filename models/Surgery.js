@@ -106,6 +106,9 @@ const SurgeryLogSchema = new Schema({
 	transcribeProcess: {
 		type: String,
 	},
+	vitalTimestamps: {
+		type: [Number],
+	}
 });
 
 module.exports = mongoose.model("Surgery", SurgeryLogSchema);
