@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 var multer = require("multer");
 const storage = require("../utils/multerStorage");
 
@@ -24,6 +25,7 @@ router.get("/check-patient-exists", async (req, res) => {
 
 router.post("/create-patient", async (req, res) => {
 	const { patientId, patientAge, patientGender } = req.body;
+	console.log(patientId, patientAge, patientGender)
 	const patient = new Patient({
 		customPatientId: patientId,
 		age: patientAge,
@@ -35,39 +37,20 @@ router.post("/create-patient", async (req, res) => {
 
 router.post("/add-surgery", async (req, res) => {
 	const { patientId, surgeryId } = req.body;
-
-	const session = await mongoose.startSession();
-	session.startTransaction();
-
-	try {
-		const surgery = await Surgery.findById(surgeryId).session(session);
-		const patient = await Patient.findOne({
-			customPatientId: patientId,
-		}).session(session);
-
-		let surgeryDetails = {
-			surgeryId: surgeryId,
-			surgeryName: surgery.surgeryTitle,
-			surgeryOrg: surgery.surgeryOrg,
-			surgeryDate: surgery.surgeryDate,
-		};
-
-		patient.patientHistory.push(surgeryDetails);
-		surgery.patientId = patient._id;
-		surgery.customPatientId = patient.customPatientId;
-
-		await patient.save();
-		await surgery.save();
-
-		await session.commitTransaction();
-
-		res.status(200).json({ status: "success" });
-	} catch (err) {
-		await session.abortTransaction();
-		throw err;
-	} finally {
-		session.endSession();
+	const surgery = await Surgery.findById(surgeryId);
+	const patient = await Patient.findOne({ customPatientId: patientId });
+	let surgeryDetails = {
+		surgeryId: surgeryId,
+        surgeryName : surgery.surgeryTitle,
+		surgeryOrg : surgery.surgeryOrg,
+		surgeryDate : surgery.surgeryDate,
 	}
+	patient.patientHistory.push(surgeryDetails);
+	surgery.patientId = patient._id;
+	surgery.customPatientId = patient.customPatientId;
+	await patient.save();
+	await surgery.save();
+	res.status(200).json({ status: "success" });
 });
 
 

@@ -9,9 +9,8 @@ const PatientSchema = new Schema({
   },
   patientDob: {
     type: Date,
-    required: true,
   },
-  patientAge: {
+  age: {
     type: Number,
     required: true,
   },

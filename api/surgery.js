@@ -11,6 +11,46 @@ const Doctor = require("../models/Doctor");
 
 const upload = multer({ storage: storage });
 
+router.get("/get-logbase", async (req, res) => {
+	try {
+		const surgeryid = req.query.id;
+		const surgery = await Surgery.findById(surgeryid).populate("patientId");
+		const result = {
+			likeCount: surgery.likeCount,
+			orgName: surgery.surgeryOrg,
+			date : surgery.surgeryDate,
+			notes: surgery.notes,
+			surgeryName: surgery.surgeryTitle,
+			patientDetails : {
+				age: surgery.patientId.age,
+				gender: surgery.patientId.gender
+			},
+			patientHistory: surgery.patientId.patientHistory,
+			surgeryDetails:{
+				team : surgery.surgeryTeam,
+			},
+		}
+		res.status(200).json({ status: "success", surgery: result });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+router.get("/loglog", async (req, res) => {
+	const surgeryid = req.query.id;
+	const surgery = await Surgery.findById(surgeryid);
+	const result = {
+		orgName : surgery.surgeryOrg,
+		date : surgery.surgeryDate,
+		surgeryName : surgery.surgeryTitle,
+		vitals : surgery.vitals,
+		transcript : surgery.transcript,
+		transcribeProcess : surgery.transcribeProcess,
+	}
+	res.status(200).json({ status: "success", surgery: result });
+
+});
 
 
 router.post(
@@ -69,7 +109,7 @@ router.post(
 			// Team and Invite Team Members
 			let teamMembers = [];
 			for (let i = 0; i < surgeryTeam.length; i++) {
-				console.log(surgeryTeam[i])
+				console.log(surgeryTeam[i]);
 				const doctor = await Doctor.findOne({
 					username: surgeryTeam[i].username,
 				});
@@ -124,7 +164,6 @@ router.post(
 			});
 			const vitalsObj = await vitalsPromise;
 			surgeryLog.vitals = vitalsObj;
-
 
 			await surgeryLog.save();
 			res.status(200).json({ status: "success", surgeryLog });

@@ -18,6 +18,18 @@ router.get("/getorgs", grantAccess(), async (req, res) => {
 	res.status(200).json({ status: "success", organisations: orgs });
 });
 
+router.get("/username-exists", async (req, res) => {
+	const username = req.query.username;
+	const doctor = await Doctor.findOne({ username });
+	if(doctor)
+	{
+		res.status(200).json({ status: "success", exists: true });
+	}
+	else{
+		res.status(200).json({ status: "success", exists: false });
+	}
+});
+
 router.get("/portfolio", grantAccess(), (req, res) => {
 	const userid = req.user.id;
 
