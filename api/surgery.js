@@ -277,6 +277,13 @@ router.post(
 	}
 );
 
+router.get("/browse", grantAccess(), async (req, res) => {
+	const surgeries = await Surgery.find({});
+	let trending = surgeries.slice(0, 3);
+	let discover = surgeries.slice(3);
+	res.status(200).json({ status: "success", trending, discover });
+});
+
 router.get("/img/:static/:folder/:filername", async (req, res) => {
 	let u = `../${req.params.static}/${req.params.folder}/${req.params.filername}`;
 	console.log(u);
