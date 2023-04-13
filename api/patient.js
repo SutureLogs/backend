@@ -24,14 +24,28 @@ router.get("/check-patient-exists", async (req, res) => {
 });
 
 router.post("/create-patient", async (req, res) => {
-	const { patientId, patientAge, patientGender } = req.body;
-	console.log(patientId, patientAge, patientGender)
+	const { patientId, patientAge, patientGender, logId } = req.body;
+	console.log(patientId, patientAge, patientGender,logId);
 	const patient = new Patient({
 		customPatientId: patientId,
 		age: patientAge,
 		gender: patientGender,
 	});
+
+	const surgery = await Surgery.findById(logId);
+	let surgeryDetails = {
+		surgeryId: logId,
+		surgeryName: surgery.surgeryTitle,
+		surgeryOrg: surgery.surgeryOrg,
+		surgeryDate: surgery.surgeryDate,
+		patientHistory: [],
+	};
+	patient.patientHistory.push(surgeryDetails);
+	surgery.patientId = patient._id;
+	surgery.customPatientId = patient.customPatientId;
 	await patient.save();
+	await surgery.save();
+
 	res.status(200).json({ status: "success" });
 });
 
@@ -41,10 +55,10 @@ router.post("/add-surgery", async (req, res) => {
 	const patient = await Patient.findOne({ customPatientId: patientId });
 	let surgeryDetails = {
 		surgeryId: surgeryId,
-        surgeryName : surgery.surgeryTitle,
-		surgeryOrg : surgery.surgeryOrg,
-		surgeryDate : surgery.surgeryDate,
-	}
+		surgeryName: surgery.surgeryTitle,
+		surgeryOrg: surgery.surgeryOrg,
+		surgeryDate: surgery.surgeryDate,
+	};
 	patient.patientHistory.push(surgeryDetails);
 	surgery.patientId = patient._id;
 	surgery.customPatientId = patient.customPatientId;
@@ -52,6 +66,5 @@ router.post("/add-surgery", async (req, res) => {
 	await surgery.save();
 	res.status(200).json({ status: "success" });
 });
-
 
 module.exports = router;
