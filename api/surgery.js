@@ -99,28 +99,21 @@ router.post("/add-reply", grantAccess(), async (req, res) => {
 router.post("/edit-surgery", grantAccess(), async (req, res) => {
 	const user = req.user.id;
 	const {
-		surgeryName,
-		surgeryDate,
-		surgeryOrg,
-		surgeryTeam,
-		surgeryVisibility,
-		notes,
-		logID,
-		privateList,
+	surgeryData
 	} = req.body;
 
-	const surgery = await Surgery.findById(logID);
+	const surgery = await Surgery.findById(surgeryData.logId);
 	if (surgery) {
-		if (surgery.surgeryTeam.some((doctor) => doctor.doctorId !== user)) {
-			return res.status(401).json({ message: "Unauthorized" });
+		if (!surgery.surgeryTeam.some((doctor) => doctor.doctorId !== user)) {
+			return res.status(200).json({ message: "Unauthorized" });
 		} else {
-			surgery.surgeryTitle = surgeryName;
-			surgery.surgeryDate = surgeryDate;
-			surgery.surgeryOrg = surgeryOrg;
-			surgery.surgeryTeam = surgeryTeam;
-			surgery.surgeryVisibility = surgeryVisibility;
-			surgery.notes = notes;
-			surgery.privateList = privateList;
+			surgery.surgeryTitle = surgeryData.surgeryName;
+			surgery.surgeryDate = surgeryData.surgeryDate;
+			surgery.surgeryOrg = surgeryData.surgeryOrg;
+			surgery.surgeryTeam = surgeryData.surgeryTeam;
+			surgery.surgeryVisibility = surgeryData.surgeryVisibility;
+			surgery.notes = surgeryData.notes;
+			surgery.privateList = surgeryData.privateList;
 			await surgery.save();
 			res.status(200).json({ status: "success", surgery: surgery });
 		}
@@ -132,8 +125,8 @@ router.get("/editpage-data", grantAccess(), async (req, res) => {
 	const surgeryId = req.query.id;
 	const surgery = await Surgery.findById(surgeryId).populate("patientId");
 	if (surgery) {
-		if (surgery.surgeryTeam.some((doctor) => doctor.doctorId !== user)) {
-			return res.status(401).json({ message: "Unauthorized" });
+		if (!surgery.surgeryTeam.some((doctor) => doctor.doctorId !== user)) {
+			return res.status(200).json({ message: "Unauthorized" });
 		} else {
 			let data ={
 				surgeryName: surgery.surgeryTitle,
