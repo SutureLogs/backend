@@ -15,11 +15,14 @@ router.get("/get-logbase", async (req, res) => {
 	try {
 		const surgeryid = req.query.id;
 		const surgery = await Surgery.findById(surgeryid).populate("patientId");
+		const leadSurgeon = surgery.surgeryTeam.find(doctor => doctor.role === "Lead Surgeon");
 		const result = {
 			likeCount: surgery.likeCount,
 			orgName: surgery.surgeryOrg,
 			date : surgery.surgeryDate,
 			notes: surgery.notes,
+			surgeonName: leadSurgeon.doctorName,
+			surgeonTitle: "Lead Surgeon",
 			surgeryName: surgery.surgeryTitle,
 			patientDetails : {
 				age: surgery.patientId.age,
@@ -40,8 +43,12 @@ router.get("/get-logbase", async (req, res) => {
 router.get("/loglog", async (req, res) => {
 	const surgeryid = req.query.id;
 	const surgery = await Surgery.findById(surgeryid);
+	const leadSurgeon = surgery.surgeryTeam.find(doctor => doctor.role === "Lead Surgeon");
 	const result = {
 		orgName : surgery.surgeryOrg,
+		surgeonName : leadSurgeon.doctorName,
+		surgeonTitle : "Lead Surgeon",
+		videoLink: surgery.videoLink,
 		date : surgery.surgeryDate,
 		surgeryName : surgery.surgeryTitle,
 		vitals : surgery.vitals,
@@ -128,6 +135,7 @@ router.post(
 							role: surgeryTeam[i].role,
 							status: "pending",
 							doctorId: doctor._id,
+							doctorName: doctor.name,
 							doctorusername: doctor.username,
 						});
 					} else {
@@ -144,6 +152,7 @@ router.post(
 							role: surgeryTeam[i].role,
 							status: "accepted",
 							doctorId: doctor._id,
+							doctorName: doctor.name,
 							doctorusername: doctor.username,
 						});
 					}
