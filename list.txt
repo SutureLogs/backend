@@ -7,21 +7,23 @@
 /createpatient
 /addhistorytopatient
 
-/browse
-
 /getsurgerybase
-/getdiscuss
 /getsurgerylog
 
 
+
+
+/getdiscuss
+/add-discuss
+/add-reply
+
+/browse
+
+
+
 /recordlike
-/addreply
-/creatediscussion
+
 /editlogs
-
-
-
-/feedpage
 
 
 

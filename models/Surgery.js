@@ -67,16 +67,26 @@ const SurgeryLogSchema = new Schema({
 	surgeryVisibility: {
 		type: String,
 	},
-	privateAccess: {
+	privateList: {
 		type: [String],
 	},
-	comments: {
+	discussions: {
 		type: [
 			{
 				comment: String,
 				doctorId: {
 					type: String,
 					required: true,
+				},
+				doctorName: String,
+				replies: {
+					type: [
+						{
+							comment: String,
+							doctorId: String,
+							doctorName: String,
+						},
+					],
 				},
 			},
 		],
@@ -108,7 +118,7 @@ const SurgeryLogSchema = new Schema({
 	},
 	vitalTimestamps: {
 		type: [Number],
-	}
+	},
 });
 
 module.exports = mongoose.model("Surgery", SurgeryLogSchema);

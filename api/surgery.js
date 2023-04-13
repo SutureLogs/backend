@@ -69,6 +69,89 @@ router.get("/loglog", async (req, res) => {
 	res.status(200).json({ status: "success", surgery: result });
 });
 
+router.post("/add-discussion", grantAccess(), async (req, res) => {
+	try {
+		const user = req.user.id;
+		const { surgeryId, comment } = req.body;
+		const doctor = await Doctor.findById(user);
+		const surgery = await Surgery.findById(surgeryId);
+		surgery.discussions.push({
+			comment: comment,
+			doctorId: user,
+			replies: [],
+			doctorName: doctor.name,
+		});
+		await surgery.save();
+		res.status(200).json({ status: "success", surgery: surgery });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+router.post("/add-reply", grantAccess(), async (req, res) => {
+	const user = req.user.id;
+	const { surgeryId, discussionId, reply } = req.body;
+	const doctor = await Doctor.findById(user);
+	const surgery = await Surgery.findById(surgeryId);
+});
+
+router.post("/edit-surgery", grantAccess(), async (req, res) => {
+	const user = req.user.id;
+	const {
+		surgeryName,
+		surgeryDate,
+		surgeryOrg,
+		surgeryTeam,
+		surgeryVisibility,
+		notes,
+		logID,
+		privateList,
+	} = req.body;
+
+	const surgery = await Surgery.findById(logID);
+	if (surgery) {
+		if (surgery.surgeryTeam.some((doctor) => doctor.doctorId !== user)) {
+			return res.status(401).json({ message: "Unauthorized" });
+		} else {
+			surgery.surgeryTitle = surgeryName;
+			surgery.surgeryDate = surgeryDate;
+			surgery.surgeryOrg = surgeryOrg;
+			surgery.surgeryTeam = surgeryTeam;
+			surgery.surgeryVisibility = surgeryVisibility;
+			surgery.notes = notes;
+			surgery.privateList = privateList;
+			await surgery.save();
+			res.status(200).json({ status: "success", surgery: surgery });
+		}
+	}
+});
+
+router.get("/editpage-data", grantAccess(), async (req, res) => {
+	const user = req.user.id;
+	const surgeryId = req.query.id;
+	const surgery = await Surgery.findById(surgeryId).populate("patientId");
+	if (surgery) {
+		if (surgery.surgeryTeam.some((doctor) => doctor.doctorId !== user)) {
+			return res.status(401).json({ message: "Unauthorized" });
+		} else {
+			let data ={
+				surgeryName: surgery.surgeryTitle,
+				surgeryDate: surgery.surgeryDate,
+				surgeryOrg: surgery.surgeryOrg,
+				surgeryTeam: surgery.surgeryTeam,
+				surgeryVisibility: surgery.surgeryVisibility,
+				notes: surgery.notes,
+				privateList: surgery.privateList,
+				patientId: surgery.patientId ? surgery.patientId.customPatientId : null,
+				patientGender : surgery.patientId ? surgery.patientId.gender : null,
+				patientAge : surgery.patientId ? surgery.patientId.age : null,
+			}
+			res.status(200).json({ status: "success", surgery: data });
+		}
+	}
+});
+
 router.post(
 	"/create-surgery",
 	upload.fields([
