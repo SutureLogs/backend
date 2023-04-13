@@ -98,9 +98,7 @@ router.post("/add-reply", grantAccess(), async (req, res) => {
 
 router.post("/edit-surgery", grantAccess(), async (req, res) => {
 	const user = req.user.id;
-	const {
-	surgeryData
-	} = req.body;
+	const { surgeryData } = req.body;
 
 	const surgery = await Surgery.findById(surgeryData.logId);
 	if (surgery) {
@@ -112,7 +110,7 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 			surgery.surgeryOrg = surgeryData.surgeryOrg;
 			surgery.surgeryTeam = surgeryData.surgeryTeam;
 			surgery.surgeryVisibility = surgeryData.surgeryVisibility;
-			surgery.notes.push(surgeryData.newNote)
+			surgery.notes.push(surgeryData.newNote);
 			surgery.privateList = surgeryData.privateList;
 			await surgery.save();
 			res.status(200).json({ status: "success", surgery: surgery });
@@ -130,7 +128,7 @@ router.get("/editpage-data", grantAccess(), async (req, res) => {
 		if (!surgery.surgeryTeam.some((doctor) => doctor.doctorId !== user)) {
 			return res.status(200).json({ message: "Unauthorized" });
 		} else {
-			let data ={
+			let data = {
 				availableOrgs: orgs,
 				surgeryName: surgery.surgeryTitle,
 				surgeryDate: surgery.surgeryDate,
@@ -139,10 +137,14 @@ router.get("/editpage-data", grantAccess(), async (req, res) => {
 				surgeryVisibility: surgery.surgeryVisibility,
 				notes: surgery.notes,
 				privateList: surgery.privateList,
-				patientId: surgery.patientId ? surgery.patientId.customPatientId : null,
-				patientGender : surgery.patientId ? surgery.patientId.gender : null,
-				patientAge : surgery.patientId ? surgery.patientId.age : null,
-			}
+				patientId: surgery.patientId
+					? surgery.patientId.customPatientId
+					: null,
+				patientGender: surgery.patientId
+					? surgery.patientId.gender
+					: null,
+				patientAge: surgery.patientId ? surgery.patientId.age : null,
+			};
 			res.status(200).json({ status: "success", surgery: data });
 		}
 	}
@@ -272,5 +274,19 @@ router.post(
 		}
 	}
 );
+
+router.get("/img/:static/:folder/:filername", async (req, res) => {
+	let u = `../${req.params.static}/${req.params.folder}/${req.params.filername}`;
+	console.log(u);
+	const path = require("path");
+	res.sendFile(path.join(__dirname, u));
+});
+
+router.get("/video/:static/:folder/:filername", async (req, res) => {
+	let u = `../${req.params.static}/${req.params.folder}/${req.params.filername}`;
+	console.log(u);
+	const path = require("path");
+	res.sendFile(path.join(__dirname, u));
+});
 
 module.exports = router;

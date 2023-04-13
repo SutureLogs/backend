@@ -8,7 +8,7 @@ const grantAccess = require("../utils/verifytoken");
 const Doctor = require("../models/Doctor");
 const Surgery = require("../models/Surgery");
 
-router.get("/test", (req, res) => {
+router.get("/test/:url", (req, res) => {
 	res.status(200).json({ status: "hello" });
 });
 
