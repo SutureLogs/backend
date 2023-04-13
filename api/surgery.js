@@ -112,7 +112,7 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 			surgery.surgeryOrg = surgeryData.surgeryOrg;
 			surgery.surgeryTeam = surgeryData.surgeryTeam;
 			surgery.surgeryVisibility = surgeryData.surgeryVisibility;
-			surgery.notes = surgeryData.notes;
+			surgery.notes.push(surgeryData.newNote)
 			surgery.privateList = surgeryData.privateList;
 			await surgery.save();
 			res.status(200).json({ status: "success", surgery: surgery });
