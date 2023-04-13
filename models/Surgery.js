@@ -10,6 +10,9 @@ const SurgeryLogSchema = new Schema({
 		type: String,
 		required: true,
 	},
+	thumbnailLink: {
+		type: String,
+	},
 	transcript: {
 		type: [
 			{
@@ -21,12 +24,12 @@ const SurgeryLogSchema = new Schema({
 	},
 	vitals: {
 		type: [
-      {
-        name: String,
-        unit: String,
-        values: [Number],
-      }
-    ],
+			{
+				name: String,
+				unit: String,
+				values: [Number],
+			},
+		],
 	},
 	sectionsInVideo: {
 		type: [
@@ -41,6 +44,9 @@ const SurgeryLogSchema = new Schema({
 		type: Schema.Types.ObjectId,
 		ref: "Patient",
 	},
+	customPatientId: {
+		type: String,
+	},
 	surgeryTeam: {
 		type: [
 			{
@@ -52,9 +58,9 @@ const SurgeryLogSchema = new Schema({
 					type: String,
 					required: true,
 				},
-        doctorName: String,
-        status: String,
-        doctorusername: String,
+				doctorName: String,
+				status: String,
+				doctorusername: String,
 			},
 		],
 	},
@@ -83,7 +89,7 @@ const SurgeryLogSchema = new Schema({
 					type: String,
 					required: true,
 				},
-        doctorName: String
+				doctorName: String,
 			},
 		],
 	},

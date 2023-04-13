@@ -11,11 +11,14 @@ const Doctor = require("../models/Doctor");
 
 const upload = multer({ storage: storage });
 
+
+
 router.post(
 	"/create-surgery",
 	upload.fields([
 		{ name: "operationVideo", maxCount: 1 },
 		{ name: "vital", maxCount: 1 },
+		{ name: "thumbnail", maxCount: 1 },
 	]),
 	grantAccess(),
 	async (req, res) => {
@@ -31,6 +34,9 @@ router.post(
 			} = req.body;
 			surgeryTeam = JSON.parse(surgeryTeam);
 
+			//Thumbnail
+			const thumbnailLink = req.files.thumbnail[0].path;
+
 			// Video
 			const operationVideoLink = req.files.operationVideo[0].path;
 			const operationVideoFileName =
@@ -43,6 +49,7 @@ router.post(
 			const surgeryLog = new Surgery({
 				surgeryTitle: surgeryName,
 				videoLink: operationVideoLink,
+				thumbnailLink: thumbnailLink,
 				surgeryOrg,
 				surgeryDate,
 				surgeryVisibility,

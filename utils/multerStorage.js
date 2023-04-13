@@ -3,12 +3,17 @@ const { nanoid } = require("nanoid");
 
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
-    console.log(file)
+		console.log(file);
 		if (
 			file.fieldname === "profilePicture" &&
 			["image/png", "image/jpeg", "image/jpg"].includes(file.mimetype)
 		) {
 			cb(null, "./static/profilepicture");
+		} else if (
+			file.fieldname === "thumbnail" &&
+			["image/png", "image/jpeg", "image/jpg"].includes(file.mimetype)
+		) {
+			cb(null, "./static/thumbnail");
 		} else if (
 			file.fieldname === "verificationDocument" &&
 			[

@@ -17,11 +17,22 @@ const PatientSchema = new Schema({
   },
   gender: {
     type: String,
-    enum: ["male", "female", "other"],
     required: true,
   },
   patientHistory: {
-    type: [String],
+    type: [
+      {
+        surgeryName : String,
+        surgeonName : String,
+        surgeonTitle : String,
+        surgeryOrg : String,
+        surgeryDate : Date,
+        surgeryId : {
+          type: Schema.Types.ObjectId,
+          ref: "Surgery"
+        }
+      }
+    ]
   },
 });
 
