@@ -12,25 +12,24 @@ const Doctor = require("../models/Doctor");
 const upload = multer({ storage: storage });
 
 router.post("/login", async (req, res) => {
-	try{
-	const { username, password } = req.body;
-	const doctor = await Doctor.findOne({ username });
+	try {
+		const { username, password } = req.body;
+		const doctor = await Doctor.findOne({ username });
 
-	if (!doctor) {
-		return res
-			.status(401)
-			.json({ message: "Invalid username or password" });
-	}
-	const isValidPassword = await bcrypt.compare(password, doctor.password);
-	if (!isValidPassword) {
-		return res
-			.status(401)
-			.json({ message: "Invalid username or password" });
-	}
-	const token = jwt.sign({ id: doctor._id }, "myprecious");
-	res.status(200).json({ status: "success", token });
-	}
-	catch(error){
+		if (!doctor) {
+			return res
+				.status(401)
+				.json({ message: "Invalid username or password" });
+		}
+		const isValidPassword = await bcrypt.compare(password, doctor.password);
+		if (!isValidPassword) {
+			return res
+				.status(401)
+				.json({ message: "Invalid username or password" });
+		}
+		const token = jwt.sign({ id: doctor._id }, "myprecious");
+		res.status(200).json({ status: "success", token });
+	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
 	}
@@ -51,7 +50,12 @@ router.post("/signup", async (req, res) => {
 	});
 	await doctor.save();
 	const token = jwt.sign({ id: doctor._id }, "myprecious");
-	res.status(200).json({ status: "success", token, username });
+	res.status(200).json({
+		status: "success",
+		token,
+		username,
+		id: doctor._id,
+	});
 });
 
 router.post(
@@ -63,10 +67,9 @@ router.post(
 	]),
 	async (req, res) => {
 		try {
-
 			const userid = await Doctor.findById(req.user.id);
 			const { name, qualification, organisation } = req.body;
-			console.log(userid, name, qualification, organisation)
+			console.log(userid, name, qualification, organisation);
 			let doctor = await Doctor.findById(userid);
 
 			if (!doctor) {
@@ -82,7 +85,11 @@ router.post(
 
 			await doctor.save();
 
-			res.status(200).json({ status: "success" });
+			res.status(200).json({
+				status: "success",
+				id: doctor._id,
+				name: doctor.name,
+			});
 		} catch (error) {
 			console.error(error);
 			res.status(500).json({ message: "Internal server error" });
