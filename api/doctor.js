@@ -10,4 +10,10 @@ router.get("/test", (req, res) => {
 	res.status(200).json({ status: "hello" });
 });
 
+router.get("/portfolio", grantAccess(), (req, res) => {
+	const userid = req.user.id;
+	
+	res.status(200).json({ status: "hello" });
+});
+
 module.exports = router;
