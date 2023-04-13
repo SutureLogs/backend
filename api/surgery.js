@@ -15,24 +15,32 @@ router.get("/get-logbase", async (req, res) => {
 	try {
 		const surgeryid = req.query.id;
 		const surgery = await Surgery.findById(surgeryid).populate("patientId");
-		const leadSurgeon = surgery.surgeryTeam.find(doctor => doctor.role === "Lead Surgeon");
+		const leadSurgeon = surgery.surgeryTeam.find(
+			(doctor) => doctor.role === "Lead Surgeon"
+		);
 		const result = {
 			likeCount: surgery.likesCount,
 			orgName: surgery.surgeryOrg,
-			date : surgery.surgeryDate,
+			date: surgery.surgeryDate,
 			notes: surgery.notes,
 			surgeonName: leadSurgeon.doctorName,
 			surgeonTitle: "Lead Surgeon",
 			surgeryName: surgery.surgeryTitle,
-			patientDetails : {
-				age: surgery.patientId.age,
-				gender: surgery.patientId.gender
+			patientDetails: {
+				age: surgery.patientId
+					? surgery.patientId.age
+					: "Not Specified",
+				gender: surgery.patientId
+					? surgery.patientId.gender
+					: "Not Specified",
 			},
-			patientHistory: surgery.patientId.patientHistory,
-			surgeryDetails:{
-				team : surgery.surgeryTeam,
+			patientHistory: surgery.patientId
+				? surgery.patientId.patientHistory
+				: [],
+			surgeryDetails: {
+				team: surgery.surgeryTeam,
 			},
-		}
+		};
 		res.status(200).json({ status: "success", surgery: result });
 	} catch (error) {
 		console.error(error);
@@ -43,23 +51,23 @@ router.get("/get-logbase", async (req, res) => {
 router.get("/loglog", async (req, res) => {
 	const surgeryid = req.query.id;
 	const surgery = await Surgery.findById(surgeryid);
-	const leadSurgeon = surgery.surgeryTeam.find(doctor => doctor.role === "Lead Surgeon");
+	const leadSurgeon = surgery.surgeryTeam.find(
+		(doctor) => doctor.role === "Lead Surgeon"
+	);
 	const result = {
-		orgName : surgery.surgeryOrg,
-		surgeonName : leadSurgeon.doctorName,
-		surgeonTitle : "Lead Surgeon",
+		orgName: surgery.surgeryOrg,
+		surgeonName: leadSurgeon.doctorName,
+		surgeonTitle: "Lead Surgeon",
 		videoLink: surgery.videoLink,
-		date : surgery.surgeryDate,
-		surgeryName : surgery.surgeryTitle,
-		vitals : surgery.vitals,
+		date: surgery.surgeryDate,
+		surgeryName: surgery.surgeryTitle,
+		vitals: surgery.vitals,
 		vitalTimestamps: surgery.vitalTimestamps,
-		transcript : surgery.transcript,
-		transcribeProcess : surgery.transcribeProcess,
-	}
+		transcript: surgery.transcript,
+		transcribeProcess: surgery.transcribeProcess,
+	};
 	res.status(200).json({ status: "success", surgery: result });
-
 });
-
 
 router.post(
 	"/create-surgery",
@@ -174,6 +182,7 @@ router.post(
 			});
 			const vitalsObj = await vitalsPromise;
 			surgeryLog.vitals = vitalsObj.vitals;
+
 			surgeryLog.vitalTimestamps = vitalsObj.timestamp;
 
 			await surgeryLog.save();
