@@ -124,11 +124,14 @@ router.get("/editpage-data", grantAccess(), async (req, res) => {
 	const user = req.user.id;
 	const surgeryId = req.query.id;
 	const surgery = await Surgery.findById(surgeryId).populate("patientId");
+	const doctor = await Doctor.findById(userid);
+	const orgs = doctor.organisations;
 	if (surgery) {
 		if (!surgery.surgeryTeam.some((doctor) => doctor.doctorId !== user)) {
 			return res.status(200).json({ message: "Unauthorized" });
 		} else {
 			let data ={
+				availableOrgs: orgs,
 				surgeryName: surgery.surgeryTitle,
 				surgeryDate: surgery.surgeryDate,
 				surgeryOrg: surgery.surgeryOrg,
