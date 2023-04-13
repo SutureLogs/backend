@@ -17,7 +17,7 @@ router.get("/get-logbase", async (req, res) => {
 		const surgery = await Surgery.findById(surgeryid).populate("patientId");
 		const leadSurgeon = surgery.surgeryTeam.find(doctor => doctor.role === "Lead Surgeon");
 		const result = {
-			likeCount: surgery.likeCount,
+			likeCount: surgery.likesCount,
 			orgName: surgery.surgeryOrg,
 			date : surgery.surgeryDate,
 			notes: surgery.notes,
