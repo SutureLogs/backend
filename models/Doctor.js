@@ -29,7 +29,7 @@ const DoctorSchema = new Schema({
 	surgeries: [
 		{
 			type: Schema.Types.ObjectId,
-			ref: "SurgeryLog",
+			ref: "Surgery",
 		},
 	],
     invites: {
