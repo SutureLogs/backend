@@ -123,6 +123,9 @@ const SurgeryLogSchema = new Schema({
 	vitalTimestamps: {
 		type: [Number],
 	},
+	surgeryDurationInMins:{
+		type: Number,
+	}
 });
 
 module.exports = mongoose.model("Surgery", SurgeryLogSchema);

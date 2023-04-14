@@ -81,7 +81,7 @@ router.post(
 			doctor.profilePicture = req.files.profilePicture[0].path;
 			doctor.verificationDocument =
 				req.files.verificationDocument[0].path;
-			doctor.organisations = organisation;
+			doctor.organisations = JSON.parse(organisation);
 
 			await doctor.save();
 

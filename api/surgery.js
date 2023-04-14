@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 var multer = require("multer");
 const storage = require("../utils/multerStorage");
 
-
 const grantAccess = require("../utils/verifytoken");
 const vitalParser = require("../utils/vitalsParser");
 const Surgery = require("../models/Surgery");
@@ -187,6 +186,19 @@ router.post(
 			const operationVideoFileName =
 				req.files.operationVideo[0].filename.split(".")[0];
 
+			let duration = 0;
+
+			ffmpeg.ffprobe(operationVideoLink, (err, metadata) => {
+				if (err) {
+					console.error(err);
+				} else {
+					const du = metadata.format.duration;
+					duration = du / 60;
+					
+				}
+			});
+			console.log(`Duration: ${duration} minutes`);
+
 			const audioPath = "static/audio/" + operationVideoFileName + ".wav";
 
 			// Audio
@@ -207,20 +219,16 @@ router.post(
 					})
 					.run();
 			});
-			const fs = require('fs');
+			const fs = require("fs");
 
 			fs.access(audioPath, fs.constants.F_OK, (err) => {
 				if (err) {
-				  console.error(err);
-				  return;
+					console.error(err);
+					return;
 				}
-				
-				console.log('File exists');
-			  });
 
-
-
-
+				console.log("File exists");
+			});
 
 			// const audipPromise = new Promise((resolve, reject) => {
 			// extractAudio(operationVideoLink, audioPath)
@@ -245,6 +253,7 @@ router.post(
 				surgeryDate,
 				surgeryVisibility,
 				transcribeProcess: "pending",
+				surgeryDurationInMins: Math.round(duration),
 				notes: [],
 			});
 
@@ -281,7 +290,6 @@ router.post(
 							doctorId: doctor._id,
 							doctorName: doctor.name,
 							doctorusername: doctor.username,
-
 						});
 					} else {
 						doctor.invites.push({
