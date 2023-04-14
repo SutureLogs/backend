@@ -281,6 +281,8 @@ router.post(
 							surgeryName: surgeryName,
 							orgName: surgeryOrg,
 							status: "pending",
+							invitedDoctorId: req.user.id,
+							invitedDoctorName: noteUser.name,
 						});
 						await doctor.save();
 

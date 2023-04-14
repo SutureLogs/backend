@@ -27,7 +27,6 @@ router.get("/username-exists", async (req, res) => {
 	} else {
 		res.status(200).json({ status: "success", exists: false });
 	}
-	
 });
 
 router.get("/portfolio", grantAccess(), async (req, res) => {
@@ -39,6 +38,10 @@ router.get("/portfolio", grantAccess(), async (req, res) => {
 			surgeryName: invite.surgeryName,
 			orgName: invite.orgName,
 			status: invite.status,
+			inviteUser: {
+				userID: invite.invitedDoctorId,
+				username: invite.invitedDoctorName,
+			},
 		};
 	});
 	// remove all the invites that have been accepted
@@ -53,7 +56,11 @@ router.get("/portfolio", grantAccess(), async (req, res) => {
 		};
 	});
 
-	res.status(200).json({ status: "success", invites:pendingInvites, surgeries });
+	res.status(200).json({
+		status: "success",
+		invites: pendingInvites,
+		surgeries,
+	});
 });
 
 router.post("/invite-action", grantAccess(), async (req, res) => {
@@ -76,8 +83,7 @@ router.post("/invite-action", grantAccess(), async (req, res) => {
 		await surgery.save();
 		await doctor.save();
 		res.status(200).json({ status: "success" });
-	}
-	else{
+	} else {
 		doctor.invites.find((invite) => {
 			if (invite.surgeryId === surgeryId) {
 				invite.status = action;

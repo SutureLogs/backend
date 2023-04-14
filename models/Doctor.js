@@ -39,6 +39,8 @@ const DoctorSchema = new Schema({
                 surgeryName: String,
                 orgName : String,
                 status : String,
+				invitedDoctorId : String,
+				invitedDoctorName : String,
             }
         ]
     },
