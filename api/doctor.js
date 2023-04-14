@@ -4,47 +4,105 @@ const jwt = require("jsonwebtoken");
 var multer = require("multer");
 var fs = require("fs");
 const storage = require("../utils/multerStorage");
-const speech = require('@google-cloud/speech');
+const speech = require("@google-cloud/speech");
 const client = new speech.SpeechClient();
+const { Storage } = require("@google-cloud/storage");
 
+const storageAudio = new Storage();
+const bucketName = "suturelogaudio";
 const grantAccess = require("../utils/verifytoken");
 const Doctor = require("../models/Doctor");
 const Surgery = require("../models/Surgery");
 
-router.get('/transcribe', async (req, res) => {
-	const filePath = 'static/audio/preamble.wav';
-	const fileStats = fs.statSync(filePath);
-	const fileSizeInBytes = fileStats.size;
-	const readStream = fs.createReadStream(filePath);
-  
+router.get("/transcribe", async (req, res) => {
+	const filePath = "static/audio/preamble.wav";
+	const file = await storageAudio.bucket(bucketName).upload(filePath);
+	const fileUrl = await file[0].makePublic();
+	const gcsUri = `gs://${bucketName}/${file[0].name}`;
+	console.log(gcsUri);
+
 	const request = {
-	  audio: {
-		content: readStream,
-		fileSize: fileSizeInBytes,
-	  },
-	  config: {
-		encoding: 'LINEAR16',
-		sampleRateHertz: 16000,
-		languageCode: 'en-US',
-	  },
+		audio: {
+			uri: gcsUri,
+		},
+		config: {
+			encoding: "LINEAR16",
+			languageCode: "en-US",
+			enableWordTimeOffsets: true,
+			enableAutomaticPunctuation: true,
+		},
 	};
-  
 	try {
-	  const [response] = await client.recognize(request);
-	  const transcription = response.results.map(result => {
-		const alternative = result.alternatives[0];
-		return {
-		  transcript: alternative.transcript,
-		  startTime: alternative.words[0].startTime.seconds + alternative.words[0].startTime.nanos / 1e9,
-		  endTime: alternative.words[alternative.words.length - 1].endTime.seconds + alternative.words[alternative.words.length - 1].endTime.nanos / 1e9
-		};
-	  });
-	  res.json({ transcript: transcription });
+		const [operation] = await client.longRunningRecognize(request);
+		const [response] = await operation.promise();
+		const transcripts = response.results.map((result) => ({
+			transcript: result.alternatives[0].transcript,
+			startTime: Number(
+				(
+					result.alternatives[0].words[0].startTime.seconds +
+					result.alternatives[0].words[0].startTime.nanos / 1e9
+				).toFixed(1)
+			),
+			endTime: Number(
+				(
+					result.alternatives[0].words[
+						result.alternatives[0].words.length - 1
+					].endTime.seconds +
+					result.alternatives[0].words[
+						result.alternatives[0].words.length - 1
+					].endTime.nanos /
+						1e9
+				).toFixed(1)
+			),
+		}));
+
+		// Group transcript by sentences
+		const groupedTranscripts = groupBySentences(transcripts);
+
+		res.json({ transcript: groupedTranscripts });
 	} catch (error) {
-	  console.error(error);
-	  res.json({ error: error.message });
+		console.error(error);
+		res.json({ error: error.message });
 	}
-  });
+});
+function groupBySentences(transcripts) {
+	const groupedTranscripts = [];
+	let currentSentence = "";
+	let currentStartTime = "";
+	let currentEndTime = "";
+
+	for (const transcript of transcripts) {
+		const sentences = transcript.transcript.split(". ");
+		for (let i = 0; i < sentences.length; i++) {
+			const sentence = sentences[i];
+			const isLastSentence = i === sentences.length - 1;
+
+			currentSentence += sentence;
+			currentEndTime = isLastSentence
+				? transcript.endTime
+				: currentEndTime;
+
+			if (isLastSentence || currentSentence.length > 100) {
+				groupedTranscripts.push({
+					transcript: currentSentence.trim(),
+					startTime: currentStartTime,
+					endTime: currentEndTime,
+				});
+
+				currentSentence = "";
+				currentStartTime = isLastSentence ? "" : transcript.startTime;
+			} else {
+				currentSentence += ". ";
+				currentEndTime = transcript.endTime;
+				if (currentStartTime === "") {
+					currentStartTime = transcript.startTime;
+				}
+			}
+		}
+	}
+
+	return groupedTranscripts;
+}
 
 router.get("/getorgs", grantAccess(), async (req, res) => {
 	const userid = req.user.id;
