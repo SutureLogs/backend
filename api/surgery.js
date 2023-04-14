@@ -4,10 +4,15 @@ const jwt = require("jsonwebtoken");
 var multer = require("multer");
 const storage = require("../utils/multerStorage");
 
+
 const grantAccess = require("../utils/verifytoken");
 const vitalParser = require("../utils/vitalsParser");
 const Surgery = require("../models/Surgery");
 const Doctor = require("../models/Doctor");
+const extractAudio = require("../utils/extractAudio");
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const upload = multer({ storage: storage });
 
@@ -94,6 +99,7 @@ router.post("/add-reply", grantAccess(), async (req, res) => {
 	const { surgeryId, discussionId, reply } = req.body;
 	const doctor = await Doctor.findById(user);
 	const surgery = await Surgery.findById(surgeryId);
+	surgery.discussions.find();
 });
 
 router.post("/edit-surgery", grantAccess(), async (req, res) => {
@@ -181,7 +187,53 @@ router.post(
 			const operationVideoFileName =
 				req.files.operationVideo[0].filename.split(".")[0];
 
+			const audioPath = "static/audio/" + operationVideoFileName + ".wav";
+
 			// Audio
+
+			const command = ffmpeg(operationVideoLink)
+				.audioChannels(1)
+				.audioFrequency(16000)
+				.output(audioPath);
+
+			// Wait for the command to complete before continuing with the other code
+			await new Promise((resolve, reject) => {
+				command
+					.on("end", () => {
+						resolve();
+					})
+					.on("error", (err) => {
+						reject(err);
+					})
+					.run();
+			});
+			const fs = require('fs');
+
+			fs.access(audioPath, fs.constants.F_OK, (err) => {
+				if (err) {
+				  console.error(err);
+				  return;
+				}
+				
+				console.log('File exists');
+			  });
+
+
+
+
+
+			// const audipPromise = new Promise((resolve, reject) => {
+			// extractAudio(operationVideoLink, audioPath)
+			// 	.then((result) => {
+			// 		console.log("Audio Extracted");
+			// 		resolve(result);
+			// 	})
+			// 	.catch((err) => {
+			// 		reject(err);
+			// 		console.log("Error in extracting audio");
+			// 	});
+			// });
+			// console.log("Audio Promise", audipPromise);
 
 			// Create
 
@@ -229,6 +281,7 @@ router.post(
 							doctorId: doctor._id,
 							doctorName: doctor.name,
 							doctorusername: doctor.username,
+
 						});
 					} else {
 						doctor.invites.push({
@@ -246,6 +299,8 @@ router.post(
 							doctorId: doctor._id,
 							doctorName: doctor.name,
 							doctorusername: doctor.username,
+							doctorTitle: doctor.qualification,
+							doctorProfilePic: doctor.profilePicture,
 						});
 					}
 				}
@@ -270,6 +325,7 @@ router.post(
 
 			await surgeryLog.save();
 			res.status(200).json({ status: "success", surgeryLog });
+			console.log("Surgery Log");
 		} catch (error) {
 			console.log(error);
 			res.status(200).json({ status: "error", details: error });
@@ -277,7 +333,7 @@ router.post(
 	}
 );
 
-router.get("/browse", grantAccess(), async (req, res) => {
+router.get("/browse", async (req, res) => {
 	const surgeries = await Surgery.find({});
 	let trending = surgeries.slice(0, 3);
 	let discover = surgeries.slice(3);

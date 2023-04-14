@@ -61,6 +61,10 @@ const SurgeryLogSchema = new Schema({
 				doctorName: String,
 				status: String,
 				doctorusername: String,
+				doctorTitle: String,
+				doctorProfilePic: String,
+
+
 			},
 		],
 	},
