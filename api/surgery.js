@@ -72,6 +72,7 @@ router.get("/get-discuss", async (req, res) => {
 			discussionID: surgery.discussions[i]._id,
 			memberName: surgery.discussions[i].doctorName,
 			replies: surgery.discussions[i].replies,
+			surgeryID: surgery._id,
 		};
 		discuss.push(val);
 	}

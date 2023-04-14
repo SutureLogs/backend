@@ -2,7 +2,10 @@ var express = require("express");
 var router = express.Router();
 const jwt = require("jsonwebtoken");
 var multer = require("multer");
+var fs = require("fs");
 const storage = require("../utils/multerStorage");
+const speech = require('@google-cloud/speech');
+const client = new speech.SpeechClient();
 
 const grantAccess = require("../utils/verifytoken");
 const Doctor = require("../models/Doctor");
