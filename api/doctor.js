@@ -8,9 +8,40 @@ const grantAccess = require("../utils/verifytoken");
 const Doctor = require("../models/Doctor");
 const Surgery = require("../models/Surgery");
 
-router.get("/test/:url", (req, res) => {
-	res.status(200).json({ status: "hello" });
-});
+router.get('/transcribe', async (req, res) => {
+	const filePath = 'static/audio/preamble.wav';
+	const fileStats = fs.statSync(filePath);
+	const fileSizeInBytes = fileStats.size;
+	const readStream = fs.createReadStream(filePath);
+  
+	const request = {
+	  audio: {
+		content: readStream,
+		fileSize: fileSizeInBytes,
+	  },
+	  config: {
+		encoding: 'LINEAR16',
+		sampleRateHertz: 16000,
+		languageCode: 'en-US',
+	  },
+	};
+  
+	try {
+	  const [response] = await client.recognize(request);
+	  const transcription = response.results.map(result => {
+		const alternative = result.alternatives[0];
+		return {
+		  transcript: alternative.transcript,
+		  startTime: alternative.words[0].startTime.seconds + alternative.words[0].startTime.nanos / 1e9,
+		  endTime: alternative.words[alternative.words.length - 1].endTime.seconds + alternative.words[alternative.words.length - 1].endTime.nanos / 1e9
+		};
+	  });
+	  res.json({ transcript: transcription });
+	} catch (error) {
+	  console.error(error);
+	  res.json({ error: error.message });
+	}
+  });
 
 router.get("/getorgs", grantAccess(), async (req, res) => {
 	const userid = req.user.id;

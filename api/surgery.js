@@ -22,10 +22,10 @@ router.get("/get-logbase", async (req, res) => {
 		const leadSurgeon = surgery.surgeryTeam.find(
 			(doctor) => doctor.role === "Lead Surgeon"
 		);
-		let team = []
-		for(let i=0;i<surgery.surgeryTeam.length;i++){
-			if(surgery.surgeryTeam[i].status ==="accepted"){
-				team.push(surgery.surgeryTeam[i])
+		let team = [];
+		for (let i = 0; i < surgery.surgeryTeam.length; i++) {
+			if (surgery.surgeryTeam[i].status === "accepted") {
+				team.push(surgery.surgeryTeam[i]);
 			}
 		}
 		const result = {
@@ -57,6 +57,33 @@ router.get("/get-logbase", async (req, res) => {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
 	}
+});
+
+router.get("/get-discuss", async (req, res) => {
+	const surgeryid = req.query.id;
+	const surgery = await Surgery.findById(surgeryid);
+	const leadSurgeon = surgery.surgeryTeam.find(
+		(doctor) => doctor.role === "Lead Surgeon"
+	);
+	let discuss = [];
+	for (let i = 0; i < surgery.discussions.length; i++) {
+		const val = {
+			comment: surgery.discussions[i].comment,
+			discussionID: surgery.discussions[i]._id,
+			memberName: surgery.discussions[i].doctorName,
+			replies: surgery.discussions[i].replies,
+		};
+		discuss.push(val);
+	}
+	const result = {
+		date: surgery.surgeryDate,
+		orgName: surgery.surgeryOrg,
+		surgeryName: surgery.surgeryTitle,
+		surgeonName: leadSurgeon.doctorName,
+		surgeonTitle: leadSurgeon.doctorTitle,
+		discussions: discuss,
+	};
+	res.status(200).json({ status: "success", surgery: result });
 });
 
 router.get("/loglog", async (req, res) => {
@@ -201,7 +228,6 @@ router.post(
 				} else {
 					const du = metadata.format.duration;
 					duration = du / 60;
-					
 				}
 			});
 			console.log(`Duration: ${duration} minutes`);
@@ -309,7 +335,7 @@ router.post(
 							orgName: surgeryOrg,
 							status: "accepted",
 						});
-						doctor.surgeries.push(surgeryLog._id)
+						doctor.surgeries.push(surgeryLog._id);
 						await doctor.save();
 
 						teamMembers.push({
