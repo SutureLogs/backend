@@ -22,6 +22,12 @@ router.get("/get-logbase", async (req, res) => {
 		const leadSurgeon = surgery.surgeryTeam.find(
 			(doctor) => doctor.role === "Lead Surgeon"
 		);
+		let team = []
+		for(let i=0;i<surgery.surgeryTeam.length;i++){
+			if(surgery.surgeryTeam[i].status ==="accepted"){
+				team.push(surgery.surgeryTeam[i])
+			}
+		}
 		const result = {
 			likeCount: surgery.likesCount,
 			orgName: surgery.surgeryOrg,
@@ -42,7 +48,7 @@ router.get("/get-logbase", async (req, res) => {
 				? surgery.patientId.patientHistory
 				: [],
 			surgeryDetails: {
-				team: surgery.surgeryTeam,
+				team: team,
 				surgeryDurationInMins: surgery.surgeryDurationInMins,
 			},
 		};
