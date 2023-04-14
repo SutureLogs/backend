@@ -132,8 +132,20 @@ router.post("/add-reply", grantAccess(), async (req, res) => {
 	const { surgeryId, discussionId, reply } = req.body;
 	const doctor = await Doctor.findById(user);
 	const surgery = await Surgery.findById(surgeryId);
-	surgery.discussions.find();
+	surgery.discussions.find((sur) => 
+	{
+		if(sur._id === discussionId){
+		sur.replies.push({
+			comment: reply,
+			doctorId: user,
+			doctorName: doctor.name,
+		});
+	}
+	});
+	await surgery.save();
+	res.status(200).json({ status: "success", surgery: surgery });
 });
+
 
 router.post("/edit-surgery", grantAccess(), async (req, res) => {
 	const user = req.user.id;
