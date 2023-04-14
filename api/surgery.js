@@ -303,6 +303,7 @@ router.post(
 							orgName: surgeryOrg,
 							status: "accepted",
 						});
+						doctor.surgeries.push(surgeryLog._id)
 						await doctor.save();
 
 						teamMembers.push({
