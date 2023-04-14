@@ -349,8 +349,8 @@ router.post(
 
 router.get("/browse", async (req, res) => {
 	const surgeries = await Surgery.find({});
-	let trending = surgeries.slice(0, 3);
-	let discover = surgeries.slice(3);
+	let trending = surgeries.slice(0, 2);
+	let discover = surgeries.slice(2);
 	res.status(200).json({ status: "success", trending, discover });
 });
 
