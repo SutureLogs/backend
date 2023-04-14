@@ -12,6 +12,7 @@ const extractAudio = require("../utils/extractAudio");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 ffmpeg.setFfmpegPath(ffmpegPath);
+const axios = require("axios");
 
 const upload = multer({ storage: storage });
 
@@ -133,20 +134,18 @@ router.post("/add-reply", grantAccess(), async (req, res) => {
 	const { surgeryId, discussionId, reply } = req.body;
 	const doctor = await Doctor.findById(user);
 	const surgery = await Surgery.findById(surgeryId);
-	surgery.discussions.find((sur) => 
-	{
-		if(sur._id === discussionId){
-		sur.replies.push({
-			comment: reply,
-			doctorId: user,
-			doctorName: doctor.name,
-		});
-	}
+	surgery.discussions.find((sur) => {
+		if (sur._id === discussionId) {
+			sur.replies.push({
+				comment: reply,
+				doctorId: user,
+				doctorName: doctor.name,
+			});
+		}
 	});
 	await surgery.save();
 	res.status(200).json({ status: "success", surgery: surgery });
 });
-
 
 router.post("/edit-surgery", grantAccess(), async (req, res) => {
 	const user = req.user.id;
@@ -247,8 +246,6 @@ router.post(
 
 			const audioPath = "static/audio/" + operationVideoFileName + ".wav";
 
-			// Audio
-
 			const command = ffmpeg(operationVideoLink)
 				.audioChannels(1)
 				.audioFrequency(16000)
@@ -276,19 +273,15 @@ router.post(
 				console.log("File exists");
 			});
 
-			// const audipPromise = new Promise((resolve, reject) => {
-			// extractAudio(operationVideoLink, audioPath)
-			// 	.then((result) => {
-			// 		console.log("Audio Extracted");
-			// 		resolve(result);
-			// 	})
-			// 	.catch((err) => {
-			// 		reject(err);
-			// 		console.log("Error in extracting audio");
-			// 	});
-			// });
-			// console.log("Audio Promise", audipPromise);
-
+			// Audio
+			const url = "http://localhost:5000/transcribe";
+			const headers = {
+				"Content-Type": "application/json",
+			};
+			const body = {
+				audioPath: operationVideoFileName,
+			};
+			const ngl = await axios.post(url, body, { headers });
 			// Create
 
 			const surgeryLog = new Surgery({
