@@ -4,12 +4,7 @@ const jwt = require("jsonwebtoken");
 var multer = require("multer");
 var fs = require("fs");
 const storage = require("../utils/multerStorage");
-const speech = require("@google-cloud/speech");
-const client = new speech.SpeechClient();
-const { Storage } = require("@google-cloud/storage");
 
-const storageAudio = new Storage();
-const bucketName = "suturelogaudio";
 const grantAccess = require("../utils/verifytoken");
 const Doctor = require("../models/Doctor");
 const Surgery = require("../models/Surgery");
