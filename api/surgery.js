@@ -154,6 +154,7 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 	const { surgeryData } = req.body;
 
 	const surgery = await Surgery.findById(surgeryData.logId);
+	const editingDoctor = await Doctor.findById(user);
 
 	if (surgery) {
 		let doc = surgery.surgeryTeam.find((doc) => doc.doctorId === user);
@@ -178,6 +179,16 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 				newDoctor[i].doctorTitle = doctor.title;
 				newDoctor[i].doctorProfilePic = doctor.profilePicture;
 				newDoctor[i].status = "pending";
+				let invite = {
+					surgeryId: surgery._id,
+					surgeryName: surgery.surgeryTitle,
+					orgName: surgery.surgeryOrg,
+					status: "pending",
+					invitedDoctorId: user,
+					invitedDoctorName: editingDoctor.name,
+				};
+				doctor.invites.push(invite);
+				await doctor.save();
 				existingTeam.push(newDoctor[i]);
 			}
 
