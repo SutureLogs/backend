@@ -293,6 +293,8 @@ router.post(
 							doctorId: doctor._id,
 							doctorName: doctor.name,
 							doctorusername: doctor.username,
+							doctorTitle: doctor.qualification,
+							doctorProfilePic: doctor.profilePicture,
 						});
 					} else {
 						doctor.invites.push({
