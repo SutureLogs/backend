@@ -28,7 +28,7 @@ router.get("/get-logbase", async (req, res) => {
 			date: surgery.surgeryDate,
 			notes: surgery.notes,
 			surgeonName: leadSurgeon.doctorName,
-			surgeonTitle: "Lead Surgeon",
+			surgeonTitle: leadSurgeon.doctorTitle,
 			surgeryName: surgery.surgeryTitle,
 			patientDetails: {
 				age: surgery.patientId
@@ -62,7 +62,7 @@ router.get("/loglog", async (req, res) => {
 	const result = {
 		orgName: surgery.surgeryOrg,
 		surgeonName: leadSurgeon.doctorName,
-		surgeonTitle: "Lead Surgeon",
+		surgeonTitle: leadSurgeon.doctorTitle,
 		videoLink: surgery.videoLink,
 		date: surgery.surgeryDate,
 		surgeryName: surgery.surgeryTitle,
