@@ -13,15 +13,7 @@ const SurgeryLogSchema = new Schema({
 	thumbnailLink: {
 		type: String,
 	},
-	transcript: {
-		type: [
-			{
-				caption: String,
-				startTime: Number,
-				endTime: Number,
-			},
-		],
-	},
+	transcript: [String],
 	vitals: {
 		type: [
 			{
@@ -123,6 +115,7 @@ const SurgeryLogSchema = new Schema({
 	vitalTimestamps: {
 		type: [Number],
 	},
+	videoTimestamps: [Number],
 	surgeryDurationInMins:{
 		type: Number,
 	}

@@ -99,6 +99,8 @@ router.get("/loglog", async (req, res) => {
 		surgeonName: leadSurgeon.doctorName,
 		surgeonTitle: leadSurgeon.doctorTitle,
 		videoLink: surgery.videoLink,
+		videoTimestamps: surgery.videoTimestamps,
+		transcript: surgery.transcript,
 		date: surgery.surgeryDate,
 		surgeryName: surgery.surgeryTitle,
 		vitals: surgery.vitals,
@@ -273,15 +275,6 @@ router.post(
 				console.log("File exists");
 			});
 
-			// Audio
-			const url = "http://localhost:5000/transcribe";
-			const headers = {
-				"Content-Type": "application/json",
-			};
-			const body = {
-				audioPath: operationVideoFileName,
-			};
-			const ngl = await axios.post(url, body, { headers });
 			// Create
 
 			const surgeryLog = new Surgery({
@@ -295,6 +288,21 @@ router.post(
 				surgeryDurationInMins: Math.round(duration),
 				notes: [],
 			});
+
+			// Audio
+			const url = "http://localhost:5000/transcribe";
+			const headers = {
+				"Content-Type": "application/json",
+			};
+			const body = {
+				audioPath: operationVideoFileName,
+				surgeryId: surgeryLog._id,
+			};
+			try{
+			const ngl = axios.post(url, body, { headers })
+			}catch(err){
+				console.log(err);
+			}
 
 			// Notes
 			const noteUser = await Doctor.findById(req.user.id);
