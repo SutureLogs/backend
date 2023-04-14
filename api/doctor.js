@@ -26,8 +26,8 @@ router.get("/username-exists", async (req, res) => {
 	}
 });
 
-router.get("/profile", grantAccess(), async (req, res) => {
-	const userid = req.user.id;
+router.get("/profile", async (req, res) => {
+	const userid = req.query.id;
 	const doctor = await Doctor.findById(userid).populate("surgeries");
 	const result = {
 		doctorFullName: doctor.name,

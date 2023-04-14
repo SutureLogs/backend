@@ -162,7 +162,7 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 			return res.status(200).json({ message: "Unauthorized" });
 		} else {
 			let newDoctor = [];
-			const existingTeam = surgery.surgeryTeam.filter((obj) => {
+			const existingTeam = surgeryData.surgeryTeam.filter((obj) => {
 				if (obj.doctorId === "") {
 					newDoctor.push(obj);
 					return false;
