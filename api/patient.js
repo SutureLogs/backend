@@ -26,6 +26,7 @@ router.get("/check-patient-exists", async (req, res) => {
 router.post("/create-patient", async (req, res) => {
 	const { patientId, patientAge, patientGender, logId } = req.body;
 	console.log(patientId, patientAge, patientGender,logId);
+	
 	const patient = new Patient({
 		customPatientId: patientId,
 		age: patientAge,
@@ -33,11 +34,16 @@ router.post("/create-patient", async (req, res) => {
 	});
 
 	const surgery = await Surgery.findById(logId);
+	const leadSurgeon = surgery.surgeryTeam.find(
+		(doctor) => doctor.role === "Lead Surgeon"
+	);
 	let surgeryDetails = {
 		surgeryId: logId,
 		surgeryName: surgery.surgeryTitle,
 		surgeryOrg: surgery.surgeryOrg,
 		surgeryDate: surgery.surgeryDate,
+		surgeonName: leadSurgeon.doctorName,
+		surgeonTitle: leadSurgeon.doctorTitle,
 		patientHistory: [],
 	};
 	patient.patientHistory.push(surgeryDetails);
