@@ -43,6 +43,7 @@ router.get("/get-logbase", async (req, res) => {
 				: [],
 			surgeryDetails: {
 				team: surgery.surgeryTeam,
+				surgeryDurationInMins: surgery.surgeryDurationInMins,
 			},
 		};
 		res.status(200).json({ status: "success", surgery: result });

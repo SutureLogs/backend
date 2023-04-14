@@ -27,6 +27,7 @@ router.get("/username-exists", async (req, res) => {
 	} else {
 		res.status(200).json({ status: "success", exists: false });
 	}
+	
 });
 
 router.get("/portfolio", grantAccess(), async (req, res) => {

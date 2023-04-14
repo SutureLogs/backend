@@ -52,12 +52,17 @@ router.post("/create-patient", async (req, res) => {
 router.post("/add-surgery", async (req, res) => {
 	const { patientId, surgeryId } = req.body;
 	const surgery = await Surgery.findById(surgeryId);
+	const leadSurgeon = surgery.surgeryTeam.find(
+		(doctor) => doctor.role === "Lead Surgeon"
+	);
 	const patient = await Patient.findOne({ customPatientId: patientId });
 	let surgeryDetails = {
 		surgeryId: surgeryId,
 		surgeryName: surgery.surgeryTitle,
 		surgeryOrg: surgery.surgeryOrg,
 		surgeryDate: surgery.surgeryDate,
+		surgeonName: leadSurgeon.doctorName,
+		surgeonTitle: leadSurgeon.doctorTitle,
 	};
 	patient.patientHistory.push(surgeryDetails);
 	surgery.patientId = patient._id;
