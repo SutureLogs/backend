@@ -60,6 +60,31 @@ router.get("/get-logbase", async (req, res) => {
 	}
 });
 
+router.post("/search", async (req, res) => {
+	const { searchQuery } = req.body;
+	const surgeries = await Surgery.find({
+		$or: [
+			{ surgeryTitle: { $regex: searchQuery, $options: "i" } },
+			{ surgeryOrg: { $regex: searchQuery, $options: "i" } },
+		],
+	});
+	let result = [];
+	for (let i = 0; i < surgeries.length; i++) {
+		const leadSurgeon = surgeries[i].surgeryTeam.find(
+			(doctor) => doctor.role === "Lead Surgeon"
+		);
+		const val = {
+			logID: surgeries[i]._id,
+			surgeryName: surgeries[i].surgeryTitle,
+			surgeonName: leadSurgeon.doctorName,
+			orgName: surgeries[i].surgeryOrg,
+			img: surgeries[i].thumbnailLink,
+		};
+		result.push(val);
+	}
+	res.status(200).json({ status: "success", surgeries: result });
+});
+
 router.get("/get-discuss", async (req, res) => {
 	const surgeryid = req.query.id;
 	const surgery = await Surgery.findById(surgeryid);
