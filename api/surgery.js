@@ -469,7 +469,7 @@ router.get("/learn", async (req, res) => {
 	for (let i = 0; i < surgery.transcript.length; i++) {
 		textData += surgery.transcript[i] + " ";
 	}
-	let numQuestions = 3;
+	let numQuestions = 5;
 	textData = "Transcript - " + textData;
 	const ask =
 		'Generate -  1 question from the Transcript.\nFollow the JSON format\n{\n  "question": "",\n  "options": [""],\n  "explanation": "",\n  "answer": ""\n}';
