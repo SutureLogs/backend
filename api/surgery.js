@@ -107,6 +107,7 @@ router.get("/get-discuss", async (req, res) => {
     surgeryName: surgery.surgeryTitle,
     surgeonName: leadSurgeon.doctorName,
     surgeonTitle: leadSurgeon.doctorTitle,
+	videoLink: surgery.videoLink,
     discussions: discuss,
   };
   res.status(200).json({ status: "success", surgery: result });
