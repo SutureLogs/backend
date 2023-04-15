@@ -13,6 +13,11 @@ const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 const axios = require("axios");
+const { Configuration, OpenAIApi } = require("openai");
+const configuration = new Configuration({
+	apiKey: process.env.OPEN_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
 const upload = multer({ storage: storage });
 
@@ -453,6 +458,39 @@ router.post(
 		}
 	}
 );
+
+router.get("/learn", async (req, res) => {
+	const surgeryId = req.query.id;
+	const surgery = await Surgery.findById(surgeryId);
+
+	let textData = "";
+	for (let i = 0; i < surgery.transcript.length; i++) {
+		textData += surgery.transcript[i] + " ";
+	}
+	const ask = 'Generate a MCQ containing 2 questions from the above text. The output must be in a JSON format as mentioned below. \n[{\n  \"question\": \"\",\n  \"options\": [\"GPT-3\", \"BERT\", \"ELMo\"],\n  \"explanation\": \"\",\n  \"answer\": 0\n},\n{\n  \"question\": \"\",\n  \"options\": [\"A\",\"B\"],\n  \"explanation\": \"\",\n  \"answer\": 0\n}\n]\n';
+	const prompt = textData + ask;
+	console.log(prompt);
+	const response = await openai.createCompletion({
+		model: "text-davinci-003",
+		prompt: prompt,
+		temperature: 0.7,
+		max_tokens: 3170,
+		top_p: 1,
+		frequency_penalty: 0,
+		presence_penalty: 0,
+
+	  });
+	  let x = (response.data.choices[0].text)
+	  let y = x.replace(/\n/g, '').replace(/\r/g, '').replace(/\t/g, '');
+	  let z = JSON.parse(y);
+	  for (let i = 0; i < z.length; i++) {
+		const answerIndex = z[i].answer;
+		z[i].answer = z[i].options[answerIndex];
+	  }
+	  
+
+	  res.status(200).json({ status: "success", quiz:z});
+});
 
 router.get("/browse", async (req, res) => {
 	const surgeries = await Surgery.find({});

@@ -3,6 +3,7 @@ var express = require("express");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
+require('dotenv').config()
 
 var authRouter = require("./api/auth");
 var doctorRouter = require("./api/doctor");
