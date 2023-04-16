@@ -520,7 +520,7 @@ router.get("/flashcards", async (req, res) => {
   while (quiz.length < numQuestions) {
     textData = "Transcript - " + textData;
     const ask =
-      'Generate 5 flashcards from the above Transcript. The flashcard must contain the following 1. A word called concept, that describes the explanation. 2. An explanation that should help in guessing the concept. The output must be in the following JSON format\n[{\n\"explanation\" : \"..\",\n\"concept\" : \"..\"\n}]';
+      'Generate 6 flashcards from the above Transcript. The flashcard must contain the following 1. A word called concept, that describes the explanation. 2. An explanation that should help in guessing the concept. The output must be in the following JSON format\n[{\n\"explanation\" : \"..\",\n\"concept\" : \"..\"\n}]';
     const prompt = textData + ask;
     console.log(prompt);
     let response = await callGpt(prompt);
