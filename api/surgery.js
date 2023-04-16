@@ -493,6 +493,47 @@ router.get("/learn", async (req, res) => {
   res.status(200).json({ status: "success", quiz: quiz });
 });
 
+router.get("/flashcards", async (req, res) => {
+  const surgeryId = req.query.id;
+  const surgery = await Surgery.findById(surgeryId);
+
+  let textData = "";
+  for (let i = 0; i < surgery.transcript.length; i++) {
+    textData += surgery.transcript[i] + " ";
+  }
+  let numQuestions = 5;
+
+  const callGpt = async (prompt) => {
+    const response = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: prompt,
+      temperature: 0.7,
+      max_tokens: 3170,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    });
+    return response.data.choices[0].text;
+  };
+  let quiz = [];
+
+  while (quiz.length < numQuestions) {
+    textData = "Transcript - " + textData;
+    const ask =
+      'Generate 5 flashcards from the above Transcript. The flashcard must contain the following 1. A word called concept, that describes the explanation. 2. An explanation that should help in guessing the concept. The output must be in the following JSON format\n[{\n\"explanation\" : \"..\",\n\"concept\" : \"..\"\n}]';
+    const prompt = textData + ask;
+    console.log(prompt);
+    let response = await callGpt(prompt);
+    let x = response.replace(/\n/g, "").replace(/\r/g, "").replace(/\t/g, "");
+    try {
+      let y = JSON.parse(x);
+      quiz = y;
+    } catch (error) {}
+  }
+
+  res.status(200).json({ status: "success", cards: quiz });
+});
+
 router.get("/browse", async (req, res) => {
   const surgeries = await Surgery.find({});
   let trending = surgeries.slice(0, 2);
