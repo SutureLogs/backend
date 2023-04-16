@@ -14,68 +14,83 @@ router.get("/test", (req, res) => {
 });
 
 router.get("/check-patient-exists", async (req, res) => {
-	const patientId = req.query.patientId;
-	const patient = await Patient.findOne({ customPatientId: patientId });
-	if (patient) {
-		res.status(200).json({ status: "success", patientExists: true });
-	} else {
-		res.status(200).json({ status: "success", patientExists: false });
+	try {
+		const patientId = req.query.patientId;
+		const patient = await Patient.findOne({ customPatientId: patientId });
+		if (patient) {
+			res.status(200).json({ status: "success", patientExists: true });
+		} else {
+			res.status(200).json({ status: "success", patientExists: false });
+		}
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({ message: "Internal server error" });
 	}
 });
 
 router.post("/create-patient", async (req, res) => {
-	const { patientId, patientAge, patientGender, logId } = req.body;
-	console.log(patientId, patientAge, patientGender,logId);
-	
-	const patient = new Patient({
-		customPatientId: patientId,
-		age: patientAge,
-		gender: patientGender,
-	});
+	try {
+		const { patientId, patientAge, patientGender, logId } = req.body;
+		console.log(patientId, patientAge, patientGender, logId);
 
-	const surgery = await Surgery.findById(logId);
-	const leadSurgeon = surgery.surgeryTeam.find(
-		(doctor) => doctor.role === "Lead Surgeon"
-	);
-	let surgeryDetails = {
-		surgeryId: logId,
-		surgeryName: surgery.surgeryTitle,
-		surgeryOrg: surgery.surgeryOrg,
-		surgeryDate: surgery.surgeryDate,
-		surgeonName: leadSurgeon.doctorName,
-		surgeonTitle: leadSurgeon.doctorTitle,
-		patientHistory: [],
-	};
-	patient.patientHistory.push(surgeryDetails);
-	surgery.patientId = patient._id;
-	surgery.customPatientId = patient.customPatientId;
-	await patient.save();
-	await surgery.save();
+		const patient = new Patient({
+			customPatientId: patientId,
+			age: patientAge,
+			gender: patientGender,
+		});
 
-	res.status(200).json({ status: "success" });
+		const surgery = await Surgery.findById(logId);
+		const leadSurgeon = surgery.surgeryTeam.find(
+			(doctor) => doctor.role === "Lead Surgeon"
+		);
+		let surgeryDetails = {
+			surgeryId: logId,
+			surgeryName: surgery.surgeryTitle,
+			surgeryOrg: surgery.surgeryOrg,
+			surgeryDate: surgery.surgeryDate,
+			surgeonName: leadSurgeon.doctorName,
+			surgeonTitle: leadSurgeon.doctorTitle,
+			patientHistory: [],
+		};
+		patient.patientHistory.push(surgeryDetails);
+		surgery.patientId = patient._id;
+		surgery.customPatientId = patient.customPatientId;
+		await patient.save();
+		await surgery.save();
+
+		res.status(200).json({ status: "success" });
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({ message: "Internal server error" });
+	}
 });
 
 router.post("/add-surgery", async (req, res) => {
-	const { patientId, surgeryId } = req.body;
-	const surgery = await Surgery.findById(surgeryId);
-	const leadSurgeon = surgery.surgeryTeam.find(
-		(doctor) => doctor.role === "Lead Surgeon"
-	);
-	const patient = await Patient.findOne({ customPatientId: patientId });
-	let surgeryDetails = {
-		surgeryId: surgeryId,
-		surgeryName: surgery.surgeryTitle,
-		surgeryOrg: surgery.surgeryOrg,
-		surgeryDate: surgery.surgeryDate,
-		surgeonName: leadSurgeon.doctorName,
-		surgeonTitle: leadSurgeon.doctorTitle,
-	};
-	patient.patientHistory.push(surgeryDetails);
-	surgery.patientId = patient._id;
-	surgery.customPatientId = patient.customPatientId;
-	await patient.save();
-	await surgery.save();
-	res.status(200).json({ status: "success" });
+	try {
+		const { patientId, surgeryId } = req.body;
+		const surgery = await Surgery.findById(surgeryId);
+		const leadSurgeon = surgery.surgeryTeam.find(
+			(doctor) => doctor.role === "Lead Surgeon"
+		);
+		const patient = await Patient.findOne({ customPatientId: patientId });
+		let surgeryDetails = {
+			surgeryId: surgeryId,
+			surgeryName: surgery.surgeryTitle,
+			surgeryOrg: surgery.surgeryOrg,
+			surgeryDate: surgery.surgeryDate,
+			surgeonName: leadSurgeon.doctorName,
+			surgeonTitle: leadSurgeon.doctorTitle,
+		};
+		patient.patientHistory.push(surgeryDetails);
+		surgery.patientId = patient._id;
+		surgery.customPatientId = patient.customPatientId;
+		await patient.save();
+		await surgery.save();
+		res.status(200).json({ status: "success" });
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({ message: "Internal server error" });
+	}
 });
 
 module.exports = router;
