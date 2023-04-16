@@ -2,13 +2,11 @@
 
 #### Geeks for Geeks - Solving for India Hackathon 2023
 
-<br/>
 
 ## Problem Statement
 
 There is a lack of a centralized platform to share detailed surgical logs and outcomes, making it challenging for surgeons to learn from each other's experiences, identify areas for improvement, and stay up-to-date with the latest developments in the field. As a result, there is a need for a solution that can streamline the process of recording and sharing surgical logs, while also fostering collaboration and promoting knowledge sharing among surgeons.
 
-<br/>
 
 ## Technologies Used
 
@@ -21,7 +19,6 @@ The backend is using the following technologies:
 -   Hosted on Google Cloud AMD T2D Instance
 -   Ngnix
 
-<br/>
 
 ## Setup
 
@@ -33,19 +30,16 @@ To get started with the project, follow these steps:
 4.  Start the server: `npm run start`
 5.  The server runs on port `3001`
 
-<br/>
 
 ## Submission Video
 
 https://youtu.be/qRUZjKnmgAw
 
-<br/>
 
 ## Frontend Repository
 
 The frontend code for the project is hosted here [https://github.com/SutureLogs/frontend](https://github.com/SutureLogs/frontend) , check it out for more details
 
-<br/>
 
 ## Transcribe Server
 
