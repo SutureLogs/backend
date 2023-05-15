@@ -58,7 +58,7 @@ router.post("/admin-login", async (req, res) => {
   }
 });
 
-router.post("add-department", grantAccess(), async (req, res) => {
+router.post("/add-department", grantAccess(), async (req, res) => {
   try {
     const { department } = req.body;
     if (department) {
