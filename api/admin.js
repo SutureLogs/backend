@@ -148,18 +148,40 @@ router.post("/add-doctor", grantAccess(), async (req, res) => {
 });
 
 router.get("/get-doctors", grantAccess(), async (req, res) => {
-    try {
-        const userid = req.user.id;
-        const doctors = await Doctor.find({ belongsTo: userid }).populate("department");
-        res.status(200).json({
-            status: "success",
-            doctors,
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+	try {
+		const userid = req.user.id;
+		// exclude password from the query
+		const doctors = await Doctor.find({ belongsTo: userid })
+			.select("-password")
+			.populate("department");
+		res.status(200).json({
+			status: "success",
+			doctors,
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
 });
 
+router.post("/edit-doctor", grantAccess(), async (req, res) => {
+	try {
+		const { doctorId, name, username, qualification, departmentId } =
+			req.body;
+		const doctor = await Doctor.findById(doctorId);
+		doctor.name = name;
+		doctor.username = username;
+		doctor.qualification = qualification;
+		doctor.department = departmentId;
+		await doctor.save();
+		res.status(200).json({
+			status: "success",
+			doctor,
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
 
 module.exports = router;
