@@ -98,7 +98,8 @@ router.get("/get-departments", grantAccess(), async (req, res) => {
 		}
 		res.status(200).json({
 			status: "success",
-			departments,
+			arraydeps: departments,
+            departments: admin.departments,
 		});
 	} catch (error) {
 		console.error(error);
