@@ -9,6 +9,7 @@ var authRouter = require("./api/auth");
 var doctorRouter = require("./api/doctor");
 var surgeryRouter = require("./api/surgery");
 var patientRouter = require("./api/patient");
+var adminRouter = require("./api/admin");
 
 var app = express();
 var mongoose = require("mongoose");
@@ -31,6 +32,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/doctor", doctorRouter);
 app.use("/api/surgery", surgeryRouter);
 app.use("/api/patient", patientRouter);
+app.use("/api/admin", adminRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

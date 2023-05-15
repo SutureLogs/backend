@@ -11,6 +11,14 @@ const DoctorSchema = new Schema({
 	organisations: {
 		type: [String],
 	},
+	belongsTo:{
+		type: Schema.Types.ObjectId,
+		ref: "Admin",
+	},
+	department: {
+		type: Schema.Types.ObjectId,
+		ref: "Department",
+	},
 	profilePicture: {
 		type: String,
 	},
