@@ -140,7 +140,7 @@ router.post("/add-doctor", grantAccess(), async (req, res) => {
 		res.status(200).json({
 			status: "success",
 			doctorId: doctor._id,
-            doctor: doctor,
+			doctor: doctor,
 		});
 	} catch (error) {
 		console.error(error);
@@ -178,6 +178,19 @@ router.post("/edit-doctor", grantAccess(), async (req, res) => {
 		res.status(200).json({
 			status: "success",
 			doctor,
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+router.post("/delete-doctor", grantAccess(), async (req, res) => {
+	try {
+		const { doctorId } = req.body;
+		await Doctor.findByIdAndDelete(doctorId);
+		res.status(200).json({
+			status: "success",
 		});
 	} catch (error) {
 		console.error(error);
