@@ -147,4 +147,19 @@ router.post("/add-doctor", grantAccess(), async (req, res) => {
 	}
 });
 
+router.get("/get-doctors", grantAccess(), async (req, res) => {
+    try {
+        const userid = req.user.id;
+        const doctors = await Doctor.find({ belongsTo: userid }).populate("department");
+        res.status(200).json({
+            status: "success",
+            doctors,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+
 module.exports = router;
