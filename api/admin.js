@@ -140,6 +140,7 @@ router.post("/add-doctor", grantAccess(), async (req, res) => {
 		res.status(200).json({
 			status: "success",
 			doctorId: doctor._id,
+            doctor: doctor,
 		});
 	} catch (error) {
 		console.error(error);
