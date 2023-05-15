@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Department = require("../models/Department");
 const grantAccess = require("../utils/verifytoken");
+const Doctor = require("../models/Doctor");
 var router = express.Router();
 
 router.post("/admin-signup", async (req, res) => {
@@ -85,13 +86,11 @@ router.post("/add-department", grantAccess(), async (req, res) => {
 	}
 });
 
-module.exports = router;
-
 router.get("/get-departments", grantAccess(), async (req, res) => {
 	try {
 		const userid = req.user.id;
 		const admin = await Admin.findById(userid).populate("departments");
-        console.log(admin.departments);
+		console.log(admin.departments);
 		let departments = [];
 		for (let i = 0; i < admin.departments.length; i++) {
 			departments.push(admin.departments[i].name);
@@ -99,10 +98,53 @@ router.get("/get-departments", grantAccess(), async (req, res) => {
 		res.status(200).json({
 			status: "success",
 			arraydeps: departments,
-            departments: admin.departments,
+			departments: admin.departments,
 		});
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
 	}
 });
+
+router.post("/edit-department", grantAccess(), async (req, res) => {
+	try {
+		const { departmentId, departmentName } = req.body;
+
+		const department = await Department.findById(departmentId);
+		department.name = departmentName;
+		await department.save();
+		res.status(200).json({
+			status: "success",
+			department,
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+router.post("/add-doctor", grantAccess(), async (req, res) => {
+	try {
+		const { name, username, password, departmentId, qualification } =
+			req.body;
+		const hashedPassword = await bcrypt.hash(password, 10);
+		const doctor = new Doctor({
+			name,
+			username,
+			password: hashedPassword,
+			qualification,
+			department: departmentId,
+			belongsTo: req.user.id,
+		});
+		await doctor.save();
+		res.status(200).json({
+			status: "success",
+			doctorId: doctor._id,
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+module.exports = router;
