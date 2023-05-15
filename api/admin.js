@@ -1,5 +1,7 @@
 var express = require("express");
 const Admin = require("../models/Admin");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const Department = require("../models/Department");
 const grantAccess = require("../utils/verifytoken");
 var router = express.Router();
