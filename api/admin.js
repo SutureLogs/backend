@@ -60,16 +60,10 @@ router.post("/admin-login", async (req, res) => {
 
 router.post("/add-department", grantAccess(), async (req, res) => {
   try {
-    const { department } = req.body;
-    if (department) {
-      const existingDepartment = await Department.findOne({
-        name: department,
-      });
-      if (existingDepartment) {
-        return res.status(200).json({ message: "Department already exists" });
-      }
+    const { department: dept } = req.body;
+    if (dept) {
       const department = new Department({
-        name: department,
+        name: dept,
       });
       const admin = await Admin.findById(req.user.id);
       admin.departments.push(department._id);
