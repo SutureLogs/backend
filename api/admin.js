@@ -13,7 +13,7 @@ const upload = multer({ storage: storage });
 
 router.post("/admin-signup", async (req, res) => {
 	try {
-		const { username, password, OrgName } = req.body;
+		const { username, password, orgName } = req.body;
 		const existingAdmin = await Admin.findOne({ username });
 		if (existingAdmin) {
 			return res.status(200).json({ message: "Username already exists" });
@@ -22,7 +22,7 @@ router.post("/admin-signup", async (req, res) => {
 		const admin = new Admin({
 			username,
 			password: hashedPassword,
-			organisation: OrgName,
+			organisation: orgName,
 		});
 		await admin.save();
 		const token = jwt.sign({ id: admin._id }, "myprecious");
