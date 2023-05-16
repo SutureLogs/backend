@@ -175,16 +175,17 @@ router.post(
 	upload.fields([{ name: "profilePicture", maxCount: 1 }]),
 	async (req, res) => {
 		try {
-			const { name, qualification, departmentId, password } =
-				req.body;
+			const { name, qualification, departmentId, password } = req.body;
 			const doctor = await Doctor.findById(req.user.id);
 			doctor.name = name;
 			doctor.qualification = qualification;
-			doctor.password = await bcrypt.hash(password, 10);
+			if (password) {
+				doctor.password = await bcrypt.hash(password, 10);
+			}
 			if (departmentId) {
 				doctor.department = departmentId;
 			}
-			if(req.files.profilePicture){
+			if (req.files.profilePicture) {
 				doctor.profilePicture = req.files.profilePicture[0].path;
 			}
 			await doctor.save();
