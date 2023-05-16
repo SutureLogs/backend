@@ -7,6 +7,10 @@ const grantAccess = require("../utils/verifytoken");
 const Doctor = require("../models/Doctor");
 var router = express.Router();
 
+var multer = require("multer");
+const storage = require("../utils/multerStorage");
+const upload = multer({ storage: storage });
+
 router.post("/admin-signup", async (req, res) => {
 	try {
 		const { username, password, OrgName } = req.body;
@@ -165,25 +169,35 @@ router.get("/get-doctors", grantAccess(), async (req, res) => {
 	}
 });
 
-router.post("/edit-doctor", grantAccess(), async (req, res) => {
-	try {
-		const { doctorId, name, username, qualification, departmentId } =
-			req.body;
-		const doctor = await Doctor.findById(doctorId);
-		doctor.name = name;
-		doctor.username = username;
-		doctor.qualification = qualification;
-		doctor.department = departmentId;
-		await doctor.save();
-		res.status(200).json({
-			status: "success",
-			doctor,
-		});
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({ message: "Internal server error" });
+router.post(
+	"/edit-doctor",
+	grantAccess(),
+	upload.fields([{ name: "profilePicture", maxCount: 1 }]),
+	async (req, res) => {
+		try {
+			const { name, qualification, departmentId, password } =
+				req.body;
+			const doctor = await Doctor.findById(req.user.id);
+			doctor.name = name;
+			doctor.qualification = qualification;
+			doctor.password = await bcrypt.hash(password, 10);
+			if (departmentId) {
+				doctor.department = departmentId;
+			}
+			if(req.files.profilePicture){
+				doctor.profilePicture = req.files.profilePicture[0].path;
+			}
+			await doctor.save();
+			res.status(200).json({
+				status: "success",
+				doctor,
+			});
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ message: "Internal server error" });
+		}
 	}
-});
+);
 
 router.post("/delete-doctor", grantAccess(), async (req, res) => {
 	try {
