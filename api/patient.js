@@ -45,12 +45,7 @@ router.post("/create-patient", async (req, res) => {
 		);
 		let surgeryDetails = {
 			surgeryId: logId,
-			surgeryName: surgery.surgeryTitle,
-			surgeryOrg: surgery.surgeryOrg,
-			surgeryDate: surgery.surgeryDate,
-			surgeonName: leadSurgeon.doctorName,
-			surgeonTitle: leadSurgeon.doctorTitle,
-			patientHistory: [],
+			leadSurgeonId: leadSurgeon.doctorId,
 		};
 		patient.patientHistory.push(surgeryDetails);
 		surgery.patientId = patient._id;
@@ -75,11 +70,7 @@ router.post("/add-surgery", async (req, res) => {
 		const patient = await Patient.findOne({ customPatientId: patientId });
 		let surgeryDetails = {
 			surgeryId: surgeryId,
-			surgeryName: surgery.surgeryTitle,
-			surgeryOrg: surgery.surgeryOrg,
-			surgeryDate: surgery.surgeryDate,
-			surgeonName: leadSurgeon.doctorName,
-			surgeonTitle: leadSurgeon.doctorTitle,
+			leadSurgeonId: leadSurgeon.doctorId,
 		};
 		patient.patientHistory.push(surgeryDetails);
 		surgery.patientId = patient._id;

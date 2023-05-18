@@ -43,12 +43,18 @@ const DoctorSchema = new Schema({
     invites: {
         type: [
             {
-                surgeryId : String,
-                surgeryName: String,
-                orgName : String,
+                surgeryId : {
+					type: Schema.Types.ObjectId,
+					ref: "Surgery",
+				},
                 status : String,
-				invitedDoctorId : String,
-				invitedDoctorName : String,
+				invitedDoctorId : {
+					type: Schema.Types.ObjectId,
+					ref: "Doctor",
+				},
+				// invitedDoctorName : String,
+				// surgeryName: String,
+                // orgName : String,
             }
         ]
     },
