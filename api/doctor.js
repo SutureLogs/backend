@@ -92,7 +92,6 @@ router.get("/portfolio", grantAccess(), async (req, res) => {
 	}
   });
 
-// Pending Migration
 router.post("/invite-action", grantAccess(), async (req, res) => {
 	try {
 		const userid = req.user.id;

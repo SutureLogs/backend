@@ -77,25 +77,27 @@ router.get("/get-logbase", async (req, res) => {
 		});
 
 		let patientHistory = surgery.patientId.patientHistory;
-		patientHistory = patientHistory.map((history) => {
-			const { surgeryId, leadSurgeonId } = history;
-			const { surgeryTitle, surgeryOrg, surgeryDate } = surgeryId;
-			const { name, qualification } = leadSurgeonId;
+		if (patientHistory.length > 0) {
+			patientHistory = patientHistory.map((history) => {
+				const { surgeryId, leadSurgeonId } = history;
+				const { surgeryTitle, surgeryOrg, surgeryDate } = surgeryId;
+				const { name, qualification } = leadSurgeonId;
 
-			const modifiedHistory = {
-				...history,
-				surgeryName: surgeryTitle,
-				surgeonName: name,
-				surgeonTitle: qualification,
-				surgeryOrg,
-				surgeryDate,
-			};
+				const modifiedHistory = {
+					...history,
+					surgeryName: surgeryTitle,
+					surgeonName: name,
+					surgeonTitle: qualification,
+					surgeryOrg,
+					surgeryDate,
+				};
 
-			modifiedHistory.surgeryId = surgeryId._id;
-			modifiedHistory.leadSurgeonId = leadSurgeonId._id;
+				modifiedHistory.surgeryId = surgeryId._id;
+				modifiedHistory.leadSurgeonId = leadSurgeonId._id;
 
-			return modifiedHistory;
-		});
+				return modifiedHistory;
+			});
+		}
 
 		let notes = surgery.notes;
 		notes = notes.map((note) => {
@@ -191,16 +193,16 @@ router.get("/get-discuss", async (req, res) => {
 		);
 
 		const discuss = surgery.discussions.map((discussion) => ({
-      comment: discussion.comment,
-      discussionID: discussion._id,
-      memberName: discussion.doctorId.name,
-      replies: discussion.replies.map((reply) => ({
-        comment: reply.comment,
-        doctorName: reply.doctorId.name,
-        doctorId: reply.doctorId._id,
-      })),
-      surgeryID: surgery._id,
-    }));
+			comment: discussion.comment,
+			discussionID: discussion._id,
+			memberName: discussion.doctorId.name,
+			replies: discussion.replies.map((reply) => ({
+				comment: reply.comment,
+				doctorName: reply.doctorId.name,
+				doctorId: reply.doctorId._id,
+			})),
+			surgeryID: surgery._id,
+		}));
 		const result = {
 			date: surgery.surgeryDate,
 			orgName: surgery.surgeryOrg,
@@ -224,7 +226,7 @@ router.get("/loglog", async (req, res) => {
 		const leadSurgeon = surgery.surgeryTeam.find(
 			(doctor) => doctor.role === "Lead Surgeon"
 		);
-    const leadSurgeonDetails = await Doctor.findById(leadSurgeon.doctorId);
+		const leadSurgeonDetails = await Doctor.findById(leadSurgeon.doctorId);
 		const result = {
 			orgName: surgery.surgeryOrg,
 			surgeonName: leadSurgeonDetails.name,
@@ -353,59 +355,67 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 });
 
 router.get("/editpage-data", grantAccess(), async (req, res) => {
-  try {
-    const user = req.user.id;
-    const surgeryId = req.query.id;
-    const surgery = await Surgery.findById(surgeryId)
-      .populate("patientId")
-      .populate("surgeryTeam.doctorId")
-      .populate("notes.doctorId");
-    const doctor = await Doctor.findById(user).populate("belongsTo")
-    const orgs = doctor.belongsTo.organisation;
+	try {
+		const user = req.user.id;
+		const surgeryId = req.query.id;
+		const surgery = await Surgery.findById(surgeryId)
+			.populate("patientId")
+			.populate("surgeryTeam.doctorId")
+			.populate("notes.doctorId");
+		const doctor = await Doctor.findById(user).populate("belongsTo");
+		const orgs = doctor.belongsTo.organisation;
 
-    if (surgery) {
-      const doc = surgery.surgeryTeam.find((doc) => doc.doctorId._id.toString() === user);
+		if (surgery) {
+			const doc = surgery.surgeryTeam.find(
+				(doc) => doc.doctorId._id.toString() === user
+			);
 
-      if (!doc) {
-        return res.status(200).json({ message: "Unauthorized" });
-      } else {
-        const surgeryTeam = surgery.surgeryTeam.map((teamMember) => ({
-          doctorId: teamMember.doctorId._id,
-          role: teamMember.role,
-          doctorName: teamMember.doctorId.name,
-          status: teamMember.status,
-          doctorusername: teamMember.doctorId.username,
-          doctorTitle: teamMember.doctorId.qualification,
-          doctorProfilePic: teamMember.doctorId.profilePicture,
-        }));
+			if (!doc) {
+				return res.status(200).json({ message: "Unauthorized" });
+			} else {
+				const surgeryTeam = surgery.surgeryTeam.map((teamMember) => ({
+					doctorId: teamMember.doctorId._id,
+					role: teamMember.role,
+					doctorName: teamMember.doctorId.name,
+					status: teamMember.status,
+					doctorusername: teamMember.doctorId.username,
+					doctorTitle: teamMember.doctorId.qualification,
+					doctorProfilePic: teamMember.doctorId.profilePicture,
+				}));
 
-        const notes = surgery.notes.map((note) => ({
-          note: note.note,
-          doctorId: note.doctorId._id,
-          doctorName: note.doctorId.name,
-        }));
+				const notes = surgery.notes.map((note) => ({
+					note: note.note,
+					doctorId: note.doctorId._id,
+					doctorName: note.doctorId.name,
+				}));
 
-        const data = {
-          availableOrgs: orgs,
-          surgeryName: surgery.surgeryTitle,
-          surgeryDate: surgery.surgeryDate,
-          surgeryOrg: surgery.surgeryOrg,
-          surgeryTeam: surgeryTeam,
-          surgeryVisibility: surgery.surgeryVisibility,
-          notes: notes,
-          privateList: surgery.privateList,
-          patientId: surgery.patientId ? surgery.patientId.customPatientId : null,
-          patientGender: surgery.patientId ? surgery.patientId.gender : null,
-          patientAge: surgery.patientId ? surgery.patientId.age : null,
-        };
+				const data = {
+					availableOrgs: orgs,
+					surgeryName: surgery.surgeryTitle,
+					surgeryDate: surgery.surgeryDate,
+					surgeryOrg: surgery.surgeryOrg,
+					surgeryTeam: surgeryTeam,
+					surgeryVisibility: surgery.surgeryVisibility,
+					notes: notes,
+					privateList: surgery.privateList,
+					patientId: surgery.patientId
+						? surgery.patientId.customPatientId
+						: null,
+					patientGender: surgery.patientId
+						? surgery.patientId.gender
+						: null,
+					patientAge: surgery.patientId
+						? surgery.patientId.age
+						: null,
+				};
 
-        res.status(200).json({ status: "success", surgery: data });
-      }
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+				res.status(200).json({ status: "success", surgery: data });
+			}
+		}
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
 });
 
 router.post(
