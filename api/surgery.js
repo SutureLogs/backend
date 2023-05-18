@@ -353,44 +353,59 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 });
 
 router.get("/editpage-data", grantAccess(), async (req, res) => {
-	try {
-		const user = req.user.id;
-		const surgeryId = req.query.id;
-		const surgery = await Surgery.findById(surgeryId).populate("patientId");
-		const doctor = await Doctor.findById(user);
-		const orgs = doctor.organisations;
-		if (surgery) {
-			let doc = surgery.surgeryTeam.find((doc) => doc.doctorId === user);
+  try {
+    const user = req.user.id;
+    const surgeryId = req.query.id;
+    const surgery = await Surgery.findById(surgeryId)
+      .populate("patientId")
+      .populate("surgeryTeam.doctorId")
+      .populate("notes.doctorId");
+    const doctor = await Doctor.findById(user).populate("belongsTo")
+    const orgs = doctor.belongsTo.organisation;
 
-			if (!doc) {
-				return res.status(200).json({ message: "Unauthorized" });
-			} else {
-				let data = {
-					availableOrgs: orgs,
-					surgeryName: surgery.surgeryTitle,
-					surgeryDate: surgery.surgeryDate,
-					surgeryOrg: surgery.surgeryOrg,
-					surgeryTeam: surgery.surgeryTeam,
-					surgeryVisibility: surgery.surgeryVisibility,
-					notes: surgery.notes,
-					privateList: surgery.privateList,
-					patientId: surgery.patientId
-						? surgery.patientId.customPatientId
-						: null,
-					patientGender: surgery.patientId
-						? surgery.patientId.gender
-						: null,
-					patientAge: surgery.patientId
-						? surgery.patientId.age
-						: null,
-				};
-				res.status(200).json({ status: "success", surgery: data });
-			}
-		}
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({ message: "Internal server error" });
-	}
+    if (surgery) {
+      const doc = surgery.surgeryTeam.find((doc) => doc.doctorId._id.toString() === user);
+
+      if (!doc) {
+        return res.status(200).json({ message: "Unauthorized" });
+      } else {
+        const surgeryTeam = surgery.surgeryTeam.map((teamMember) => ({
+          doctorId: teamMember.doctorId._id,
+          role: teamMember.role,
+          doctorName: teamMember.doctorId.name,
+          status: teamMember.status,
+          doctorusername: teamMember.doctorId.username,
+          doctorTitle: teamMember.doctorId.qualification,
+          doctorProfilePic: teamMember.doctorId.profilePicture,
+        }));
+
+        const notes = surgery.notes.map((note) => ({
+          note: note.note,
+          doctorId: note.doctorId._id,
+          doctorName: note.doctorId.name,
+        }));
+
+        const data = {
+          availableOrgs: orgs,
+          surgeryName: surgery.surgeryTitle,
+          surgeryDate: surgery.surgeryDate,
+          surgeryOrg: surgery.surgeryOrg,
+          surgeryTeam: surgeryTeam,
+          surgeryVisibility: surgery.surgeryVisibility,
+          notes: notes,
+          privateList: surgery.privateList,
+          patientId: surgery.patientId ? surgery.patientId.customPatientId : null,
+          patientGender: surgery.patientId ? surgery.patientId.gender : null,
+          patientAge: surgery.patientId ? surgery.patientId.age : null,
+        };
+
+        res.status(200).json({ status: "success", surgery: data });
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 router.post(
