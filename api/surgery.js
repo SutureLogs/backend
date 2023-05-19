@@ -57,27 +57,29 @@ router.get("/get-logbase", async (req, res) => {
 			}
 		}
 
-		const modifiedTeam = team.map(({ doctorId, ...rest }) => {
-			const {
-				name: doctorName,
-				qualification: doctorTitle,
-				username: doctorUsername,
-				profilePicture: doctorProfilePic,
-				_id: doctorId,
-			} = doctorId;
+    const modifiedTeam = team.map(({ doctorId: id, role}) => {
+      const {
+        name: doctorName,
+        qualification: doctorTitle,
+        username: doctorUsername,
+        profilePicture: doctorProfilePic,
+        _id: doctorId,
 
-			return {
-				...rest,
-				doctorName,
-				doctorTitle,
-				doctorUsername,
-				doctorProfilePic,
-				doctorId,
-			};
-		});
-
-		let patientHistory = surgery.patientId.patientHistory;
+      } = id;
+    
+      return {
+        doctorName,
+        doctorTitle,
+        doctorUsername,
+        doctorProfilePic,
+        role,
+        doctorId,
+      };
+    });
+    let patientHistory = []
+		
 		if (patientHistory.length > 0) {
+      patientHistory = surgery.patientId.patientHistory
 			patientHistory = patientHistory.map((history) => {
 				const { surgeryId, leadSurgeonId } = history;
 				const { surgeryTitle, surgeryOrg, surgeryDate } = surgeryId;
@@ -100,14 +102,16 @@ router.get("/get-logbase", async (req, res) => {
 		}
 
 		let notes = surgery.notes;
+    if(notes.length > 0){
 		notes = notes.map((note) => {
 			const { name, _id: id } = note.doctorId;
 			return {
-				...note,
+        note: note.note,
 				doctorName: name,
 				doctorId: id,
 			};
 		});
+    }
 
 		const result = {
 			likeCount: surgery.likesCount,
