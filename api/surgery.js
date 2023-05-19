@@ -78,7 +78,7 @@ router.get("/get-logbase", async (req, res) => {
     });
     let patientHistory = [];
 
-    if (surgery.patientId.patientHistory.length > 0) {
+    if (surgery.patientId && surgery.patientId.patientHistory.length > 0) {
       patientHistory = surgery.patientId.patientHistory;
       console.log(patientHistory);
       patientHistory = patientHistory.map((history) => {
@@ -522,11 +522,13 @@ router.post(
 
       // Notes
       const noteUser = await Doctor.findById(req.user.id);
-      let note = {
-        note: surgeryNote,
-        doctorId: req.user.id,
-      };
-      surgeryLog.notes.push(note);
+      if (surgeryNote) {
+        let note = {
+          note: surgeryNote,
+          doctorId: req.user.id,
+        };
+        surgeryLog.notes.push(note);
+      }
 
       // Team and Invite Team Members
       let teamMembers = [];
