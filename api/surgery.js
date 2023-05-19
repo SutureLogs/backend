@@ -152,7 +152,7 @@ router.post("/search", async (req, res) => {
         { surgeryTitle: { $regex: searchQuery, $options: "i" } },
         { surgeryOrg: { $regex: searchQuery, $options: "i" } },
       ],
-    });
+    }).populate('surgeryTeam.doctorId');
     let result = [];
     for (let i = 0; i < surgeries.length; i++) {
       const leadSurgeon = surgeries[i].surgeryTeam.find(
@@ -161,7 +161,7 @@ router.post("/search", async (req, res) => {
       const val = {
         logID: surgeries[i]._id,
         surgeryName: surgeries[i].surgeryTitle,
-        surgeonName: leadSurgeon.doctorName,
+        surgeonName: leadSurgeon.doctorId.name,
         orgName: surgeries[i].surgeryOrg,
         img: surgeries[i].thumbnailLink,
       };
@@ -713,7 +713,7 @@ router.get("/flashcards", async (req, res) => {
   res.status(200).json({ status: "success", cards: quiz });
 });
 
-// Pending migration
+
 router.get("/browse", async (req, res) => {
   try {
     const surgeries = await Surgery.find({})
