@@ -11,6 +11,14 @@ const DoctorSchema = new Schema({
 	organisations: {
 		type: [String],
 	},
+	belongsTo:{
+		type: Schema.Types.ObjectId,
+		ref: "Admin",
+	},
+	department: {
+		type: Schema.Types.ObjectId,
+		ref: "Department",
+	},
 	profilePicture: {
 		type: String,
 	},
@@ -35,12 +43,18 @@ const DoctorSchema = new Schema({
     invites: {
         type: [
             {
-                surgeryId : String,
-                surgeryName: String,
-                orgName : String,
+                surgeryId : {
+					type: Schema.Types.ObjectId,
+					ref: "Surgery",
+				},
                 status : String,
-				invitedDoctorId : String,
-				invitedDoctorName : String,
+				invitedDoctorId : {
+					type: Schema.Types.ObjectId,
+					ref: "Doctor",
+				},
+				// invitedDoctorName : String,
+				// surgeryName: String,
+                // orgName : String,
             }
         ]
     },

@@ -43,18 +43,19 @@ const SurgeryLogSchema = new Schema({
 		type: [
 			{
 				doctorId: {
-					type: String,
-					required: true,
+					type: Schema.Types.ObjectId,
+					ref: "Doctor",
 				},
 				role: {
 					type: String,
 					required: true,
 				},
-				doctorName: String,
 				status: String,
-				doctorusername: String,
-				doctorTitle: String,
-				doctorProfilePic: String,
+
+				// doctorName: String,
+				// doctorusername: String,
+				// doctorTitle: String,
+				// doctorProfilePic: String,
 
 
 			},
@@ -71,16 +72,19 @@ const SurgeryLogSchema = new Schema({
 			{
 				comment: String,
 				doctorId: {
-					type: String,
-					required: true,
+					type: Schema.Types.ObjectId,
+					ref: "Doctor",
 				},
-				doctorName: String,
+				// doctorName: String,
 				replies: {
 					type: [
 						{
 							comment: String,
-							doctorId: String,
-							doctorName: String,
+							doctorId: {
+								type: Schema.Types.ObjectId,
+								ref: "Doctor",
+							},
+							// doctorName: String,
 						},
 					],
 				},
@@ -92,10 +96,10 @@ const SurgeryLogSchema = new Schema({
 			{
 				note: String,
 				doctorId: {
-					type: String,
-					required: true,
+					type: Schema.Types.ObjectId,
+					ref: "Doctor",
 				},
-				doctorName: String,
+				// doctorName: String,
 			},
 		],
 	},

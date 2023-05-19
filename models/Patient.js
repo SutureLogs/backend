@@ -21,11 +21,15 @@ const PatientSchema = new Schema({
   patientHistory: {
     type: [
       {
-        surgeryName : String,
-        surgeonName : String,
-        surgeonTitle : String,
-        surgeryOrg : String,
-        surgeryDate : Date,
+        // surgeryName : String,
+        // surgeonName : String,
+        // surgeonTitle : String,
+        // surgeryOrg : String,
+        // surgeryDate : Date,
+        leadSurgeonId: {
+          type: Schema.Types.ObjectId,
+          ref: "Doctor"
+        },
         surgeryId : {
           type: Schema.Types.ObjectId,
           ref: "Surgery"

@@ -12,9 +12,11 @@ const Surgery = require("../models/Surgery");
 router.get("/getorgs", grantAccess(), async (req, res) => {
 	try {
 		const userid = req.user.id;
-		const doctor = await Doctor.findById(userid);
-		const orgs = doctor.organisations;
-		res.status(200).json({ status: "success", organisations: orgs });
+		const doctor = await Doctor.findById(userid).populate("belongsTo");
+		const orgs = doctor.belongsTo.organisation;
+		let result = [];
+		result[0] = orgs
+		res.status(200).json({ status: "success", organisations: result });
 	} catch (err) {
 		console.log(err);
 		res.status(500).json({ message: "Internal server error" });
@@ -39,11 +41,11 @@ router.get("/username-exists", async (req, res) => {
 router.get("/profile", async (req, res) => {
 	try {
 		const userid = req.query.id;
-		const doctor = await Doctor.findById(userid).populate("surgeries");
+		const doctor = await Doctor.findById(userid).populate("surgeries").populate("belongsTo");
 		const result = {
 			doctorFullName: doctor.name,
 			doctorQualification: doctor.qualification,
-			doctorOrganisation: doctor.organisations,
+			doctorOrganisation: [doctor.belongsTo.organisation],
 			doctorImg: doctor.profilePicture,
 			surgeries: doctor.surgeries,
 		};
@@ -56,42 +58,39 @@ router.get("/profile", async (req, res) => {
 
 router.get("/portfolio", grantAccess(), async (req, res) => {
 	try {
-		const userid = req.user.id;
-		const doctor = await Doctor.findById(userid).populate("surgeries");
-		const invites = doctor.invites.map((invite) => {
-			return {
-				logId: invite.surgeryId,
-				surgeryName: invite.surgeryName,
-				orgName: invite.orgName,
-				status: invite.status,
-				inviteUser: {
-					userID: invite.invitedDoctorId,
-					username: invite.invitedDoctorName,
-				},
-			};
-		});
-		// remove all the invites that have been accepted
-		const pendingInvites = invites.filter((invite) => {
-			return invite.status !== "accepted";
-		});
-		const surgeries = doctor.surgeries.map((surgery) => {
-			return {
-				logId: surgery._id,
-				surgeryName: surgery.surgeryTitle,
-				surgeryImage: surgery.thumbnailLink,
-			};
-		});
-
-		res.status(200).json({
-			status: "success",
-			invites: pendingInvites,
-			surgeries,
-		});
+	  const userid = req.user.id;
+	  const doctor = await Doctor.findById(userid).populate("surgeries invites.surgeryId invites.invitedDoctorId");
+	  
+	  const invites = doctor.invites.map((invite) => ({
+		logId: invite.surgeryId._id,
+		surgeryName: invite.surgeryId.surgeryTitle,
+		orgName: invite.surgeryId.surgeryOrg,
+		status: invite.status,
+		inviteUser: {
+		  userID: invite.invitedDoctorId._id,
+		  username: invite.invitedDoctorId.name,
+		},
+	  }));
+  
+	  // Remove all the invites that have been accepted
+	  const pendingInvites = invites.filter((invite) => invite.status !== "accepted");
+  
+	  const surgeries = doctor.surgeries.map((surgery) => ({
+		logId: surgery._id,
+		surgeryName: surgery.surgeryTitle,
+		surgeryImage: surgery.thumbnailLink,
+	  }));
+  
+	  res.status(200).json({
+		status: "success",
+		invites: pendingInvites,
+		surgeries,
+	  });
 	} catch (err) {
-		console.log(err);
-		res.status(500).json({ message: "Internal server error" });
+	  console.log(err);
+	  res.status(500).json({ message: "Internal server error" });
 	}
-});
+  });
 
 router.post("/invite-action", grantAccess(), async (req, res) => {
 	try {
