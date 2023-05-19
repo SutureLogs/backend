@@ -62,6 +62,5 @@ function vitalParser(filePath, vitalStartTime) {
       });
   });
 }
-vitalParser("./static/vitals/1.csv");
 
 module.exports = vitalParser;

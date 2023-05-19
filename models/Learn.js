@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const Department = new Schema({
-  learn: {
-    type: String,
-    required: true,
-  },
+const Learn = new Schema({
+  surgeryID: String,
+  quiz: [],
+  flashcard: [],
 });
 
-module.exports = mongoose.model("Department", Department);
+module.exports = mongoose.model("Learn", Learn);
