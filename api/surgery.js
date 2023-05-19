@@ -12,6 +12,7 @@ const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 const axios = require("axios");
 const { Configuration, OpenAIApi } = require("openai");
+const Learn = require("../models/Learn");
 const configuration = new Configuration({
   apiKey: process.env.OPEN_API_KEY,
 });
@@ -601,7 +602,7 @@ router.get("/learn", async (req, res) => {
 
   // try cache
   const learnCache = await Learn.findOne({ surgeryId });
-  if (learnCache) {
+  if (learnCache && learnCache.quiz && learnCache.quiz.length > 0) {
     res.status(200).json({ status: "success", quiz: learnCache.quiz });
     return;
   }
@@ -640,17 +641,29 @@ router.get("/learn", async (req, res) => {
     } catch (error) {}
   }
   // cache quiz
-  const quizCache = new Quiz({
-    surgeryId: surgeryId,
-    quiz: quiz,
-  });
-  await quizCache.save();
+  if (learnCache) {
+    learnCache.quiz = quiz;
+    await learnCache.save();
+  } else {
+    const quizCache = new Learn({
+      surgeryId: surgeryId,
+      quiz: quiz,
+    });
+    await quizCache.save();
+  }
   res.status(200).json({ status: "success", quiz: quiz });
 });
 
 router.get("/flashcards", async (req, res) => {
   const surgeryId = req.query.id;
   const surgery = await Surgery.findById(surgeryId);
+
+  // try cache
+  const learnCache = await Learn.findOne({ surgeryId });
+  if (learnCache && learnCache.flashcard && learnCache.flashcard.length > 0) {
+    res.status(200).json({ status: "success", cards: learnCache.flashcard });
+    return;
+  }
 
   let textData = "";
   for (let i = 0; i < surgery.transcript.length; i++) {
@@ -684,6 +697,16 @@ router.get("/flashcards", async (req, res) => {
       let y = JSON.parse(x);
       quiz = y;
     } catch (error) {}
+  }
+  if (learnCache) {
+    learnCache.flashcard = flashcards;
+    await learnCache.save();
+  } else {
+    const quizCache = new Learn({
+      surgeryId: surgeryId,
+      quiz: quiz,
+    });
+    await quizCache.save();
   }
 
   res.status(200).json({ status: "success", cards: quiz });
