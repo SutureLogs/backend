@@ -345,6 +345,7 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
         surgery.surgeryOrg = surgeryData.surgeryOrg;
         surgery.surgeryTeam = existingTeam;
         surgery.surgeryVisibility = surgeryData.surgeryVisibility;
+        surgery.notes = surgeryData.notes;
         if (surgeryData.newNote.note !== "") {
           surgery.notes.push(surgeryData.newNote);
         }
@@ -715,7 +716,7 @@ router.get("/flashcards", async (req, res) => {
 // Pending migration
 router.get("/browse", async (req, res) => {
   try {
-    const surgeries = await Surgery.find({});
+    const surgeries = await Surgery.find({})
     let trending = surgeries.slice(0, 2);
     let discover = surgeries.slice(2);
     res.status(200).json({ status: "success", trending, discover });
