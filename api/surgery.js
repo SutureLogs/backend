@@ -20,118 +20,126 @@ const openai = new OpenAIApi(configuration);
 const upload = multer({ storage: storage });
 
 router.get("/get-logbase", async (req, res) => {
-  try {
-    const surgeryid = req.query.id;
-    const surgery = await Surgery.findById(surgeryid)
-      .populate({
-        path: "patientId",
-        populate: {
-          path: "patientHistory",
-          populate: [
-            {
-              path: "leadSurgeonId",
-              model: "Doctor",
-            },
-            {
-              path: "surgeryId",
-              model: "Surgery",
-            },
-          ],
-        },
-      })
-      .populate({
-        path: "surgeryTeam.doctorId",
-        model: "Doctor",
-      })
-      .populate({
-        path: "notes.doctorId",
-        model: "Doctor",
-      });
-    const leadSurgeon = surgery.surgeryTeam.find(
-      (doctor) => doctor.role === "Lead Surgeon"
-    );
-    let team = [];
-    for (let i = 0; i < surgery.surgeryTeam.length; i++) {
-      if (surgery.surgeryTeam[i].status === "accepted") {
-        team.push(surgery.surgeryTeam[i]);
-      }
-    }
+	try {
+		const surgeryid = req.query.id;
+		const surgery = await Surgery.findById(surgeryid)
+			.populate({
+				path: "patientId",
+				populate: {
+					path: "patientHistory",
+					populate: [
+						{
+							path: "leadSurgeonId",
+							model: "Doctor",
+						},
+						{
+							path: "surgeryId",
+							model: "Surgery",
+						},
+					],
+				},
+			})
+			.populate({
+				path: "surgeryTeam.doctorId",
+				model: "Doctor",
+			})
+			.populate({
+				path: "notes.doctorId",
+				model: "Doctor",
+			});
+		const leadSurgeon = surgery.surgeryTeam.find(
+			(doctor) => doctor.role === "Lead Surgeon"
+		);
+		let team = [];
+		for (let i = 0; i < surgery.surgeryTeam.length; i++) {
+			if (surgery.surgeryTeam[i].status === "accepted") {
+				team.push(surgery.surgeryTeam[i]);
+			}
+		}
 
-    const modifiedTeam = team.map(({ doctorId, ...rest }) => {
+    const modifiedTeam = team.map(({ doctorId: id, role}) => {
       const {
         name: doctorName,
         qualification: doctorTitle,
         username: doctorUsername,
         profilePicture: doctorProfilePic,
         _id: doctorId,
-      } = doctorId;
 
+      } = id;
+    
       return {
-        ...rest,
         doctorName,
         doctorTitle,
         doctorUsername,
         doctorProfilePic,
+        role,
         doctorId,
       };
     });
+    let patientHistory = []
+		
+		if (patientHistory.length > 0) {
+      patientHistory = surgery.patientId.patientHistory
+			patientHistory = patientHistory.map((history) => {
+				const { surgeryId, leadSurgeonId } = history;
+				const { surgeryTitle, surgeryOrg, surgeryDate } = surgeryId;
+				const { name, qualification } = leadSurgeonId;
 
-    let patientHistory = surgery.patientId.patientHistory;
-    if (patientHistory.length > 0) {
-      patientHistory = patientHistory.map((history) => {
-        const { surgeryId, leadSurgeonId } = history;
-        const { surgeryTitle, surgeryOrg, surgeryDate } = surgeryId;
-        const { name, qualification } = leadSurgeonId;
+				const modifiedHistory = {
+					...history,
+					surgeryName: surgeryTitle,
+					surgeonName: name,
+					surgeonTitle: qualification,
+					surgeryOrg,
+					surgeryDate,
+				};
 
-        const modifiedHistory = {
-          ...history,
-          surgeryName: surgeryTitle,
-          surgeonName: name,
-          surgeonTitle: qualification,
-          surgeryOrg,
-          surgeryDate,
-        };
+				modifiedHistory.surgeryId = surgeryId._id;
+				modifiedHistory.leadSurgeonId = leadSurgeonId._id;
 
-        modifiedHistory.surgeryId = surgeryId._id;
-        modifiedHistory.leadSurgeonId = leadSurgeonId._id;
+				return modifiedHistory;
+			});
+		}
 
-        return modifiedHistory;
-      });
+		let notes = surgery.notes;
+    if(notes.length > 0){
+		notes = notes.map((note) => {
+			const { name, _id: id } = note.doctorId;
+			return {
+        note: note.note,
+				doctorName: name,
+				doctorId: id,
+			};
+		});
     }
 
-    let notes = surgery.notes;
-    notes = notes.map((note) => {
-      const { name, _id: id } = note.doctorId;
-      return {
-        ...note,
-        doctorName: name,
-        doctorId: id,
-      };
-    });
-
-    const result = {
-      likeCount: surgery.likesCount,
-      orgName: surgery.surgeryOrg,
-      date: surgery.surgeryDate,
-      notes: notes,
-      surgeonName: leadSurgeon.doctorId.name,
-      surgeonTitle: leadSurgeon.doctorId.qualification,
-      surgeryName: surgery.surgeryTitle,
-      patientDetails: {
-        age: surgery.patientId ? surgery.patientId.age : "Not Specified",
-        gender: surgery.patientId ? surgery.patientId.gender : "Not Specified",
-      },
-      patientHistory: surgery.patientId ? patientHistory : [],
-      surgeryDetails: {
-        team: modifiedTeam,
-        surgeryDurationInMins: surgery.surgeryDurationInMins,
-      },
-    };
-    res.status(200).json({ status: "success", surgery: result });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+		const result = {
+			likeCount: surgery.likesCount,
+			orgName: surgery.surgeryOrg,
+			date: surgery.surgeryDate,
+			notes: notes,
+			surgeonName: leadSurgeon.doctorId.name,
+			surgeonTitle: leadSurgeon.doctorId.qualification,
+			surgeryName: surgery.surgeryTitle,
+			patientDetails: {
+				age: surgery.patientId
+					? surgery.patientId.age
+					: "Not Specified",
+				gender: surgery.patientId
+					? surgery.patientId.gender
+					: "Not Specified",
+			},
+			patientHistory: surgery.patientId ? patientHistory : [],
+			surgeryDetails: {
+				team: modifiedTeam,
+				surgeryDurationInMins: surgery.surgeryDurationInMins,
+			},
+		};
+		res.status(200).json({ status: "success", surgery: result });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
 });
 
 // Pending migration
