@@ -213,7 +213,7 @@ router.get("/get-discuss", async (req, res) => {
       orgName: surgery.surgeryOrg,
       surgeryName: surgery.surgeryTitle,
       surgeonName: leadSurgeon.doctorId.name,
-      surgeonTitle: leadSurgeon.role,
+      surgeonTitle: leadSurgeon.doctorId.qualification,
       videoLink: surgery.videoLink,
       discussions: discuss,
     };
