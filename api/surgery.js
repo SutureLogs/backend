@@ -305,7 +305,7 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
     const editingDoctor = await Doctor.findById(user);
 
     if (surgery) {
-      let doc = surgery.surgeryTeam.find((doc) => doc.doctorId === user);
+      let doc = surgery.surgeryTeam.find((doc) => doc.doctorId.toString() === user);
       if (!doc) {
         return res.status(200).json({ message: "Unauthorized" });
       } else {
