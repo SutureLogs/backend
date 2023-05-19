@@ -700,7 +700,7 @@ router.get("/flashcards", async (req, res) => {
     } catch (error) {}
   }
   if (learnCache) {
-    learnCache.flashcard = flashcards;
+    learnCache.flashcard = quiz;
     await learnCache.save();
   } else {
     const quizCache = new Learn({

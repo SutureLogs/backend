@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const Learn = new Schema({
-  surgeryID: String,
+  surgeryId: String,
   quiz: [],
   flashcard: [],
 });
