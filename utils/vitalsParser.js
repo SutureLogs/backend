@@ -26,14 +26,15 @@ function vitalParser(filePath, vitalStartTime) {
               )
             );
             for (let i = 1; i < keys.length; i++) {
-              const key = keys[i];
-              const name = key.split("(")[0].trim();
-              const unit = key.match(/\(([^)]+)\)/)[1];
-              const value = parseInt(data[key]);
+              let key = keys[i];
+              let name = key.split("(")[0].trim();
+              let unit = key.match(/\(([^)]+)\)/)[1];
+              let value = parseInt(data[key]);
 
               const index = vitals.findIndex(
                 (v) => v.name === name && v.unit === unit
               );
+              if (isNaN(value)) value = 0;
               if (index >= 0) {
                 vitals[index].values.push(value);
               } else {
