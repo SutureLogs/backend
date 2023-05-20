@@ -506,19 +506,19 @@ router.post(
       });
 
       // Audio
-      const url = "http://localhost:5000/transcribe";
-      const headers = {
-        "Content-Type": "application/json",
-      };
-      const body = {
-        audioPath: operationVideoFileName,
-        surgeryId: surgeryLog._id,
-      };
-      try {
-        const ngl = axios.post(url, body, { headers });
-      } catch (err) {
-        console.log(err);
-      }
+      // const url = "http://localhost:5000/transcribe";
+      // const headers = {
+      //   "Content-Type": "application/json",
+      // };
+      // const body = {
+      //   audioPath: operationVideoFileName,
+      //   surgeryId: surgeryLog._id,
+      // };
+      // try {
+      //   const ngl = axios.post(url, body, { headers });
+      // } catch (err) {
+      //   console.log(err);
+      // }
 
       // Notes
       const noteUser = await Doctor.findById(req.user.id);
