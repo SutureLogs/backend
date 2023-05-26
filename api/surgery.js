@@ -36,6 +36,10 @@ router.get("/get-logbase", async (req, res) => {
             {
               path: "surgeryId",
               model: "Surgery",
+              populate: {
+                path: "belongsTo",
+                model: "Admin",
+              },
             },
           ],
         },
@@ -47,7 +51,11 @@ router.get("/get-logbase", async (req, res) => {
       .populate({
         path: "notes.doctorId",
         model: "Doctor",
-      });
+      })
+      .populate('belongsTo');
+    
+    const organisation = surgery.belongsTo.organisation;
+    
     const leadSurgeon = surgery.surgeryTeam.find(
       (doctor) => doctor.role === "Lead Surgeon"
     );
@@ -83,14 +91,14 @@ router.get("/get-logbase", async (req, res) => {
       console.log(patientHistory);
       patientHistory = patientHistory.map((history) => {
         const { surgeryId, leadSurgeonId } = history;
-        const { surgeryTitle, surgeryOrg, surgeryDate } = surgeryId;
+        const { surgeryTitle, belongsTo, surgeryDate } = surgeryId;
         const { name, qualification } = leadSurgeonId;
 
         const modifiedHistory = {
           surgeryName: surgeryTitle,
           surgeonName: name,
           surgeonTitle: qualification,
-          surgeryOrg,
+          surgeryOrg : belongsTo.organisation,
           surgeryDate,
         };
 
@@ -115,7 +123,7 @@ router.get("/get-logbase", async (req, res) => {
 
     const result = {
       likeCount: surgery.likesCount,
-      orgName: surgery.surgeryOrg,
+      orgName: organisation,
       date: surgery.surgeryDate,
       notes: notes,
       surgeonName: leadSurgeon.doctorId.name,
@@ -145,9 +153,11 @@ router.post("/search", async (req, res) => {
     const surgeries = await Surgery.find({
       $or: [
         { surgeryTitle: { $regex: searchQuery, $options: "i" } },
-        { surgeryOrg: { $regex: searchQuery, $options: "i" } },
+        { "belongsTo.organisation": { $regex: searchQuery, $options: "i" } },
       ],
-    }).populate("surgeryTeam.doctorId");
+    })
+    .populate("surgeryTeam.doctorId")
+    .populate('belongsTo');
     let result = [];
     for (let i = 0; i < surgeries.length; i++) {
       const leadSurgeon = surgeries[i].surgeryTeam.find(
@@ -157,7 +167,7 @@ router.post("/search", async (req, res) => {
         logID: surgeries[i]._id,
         surgeryName: surgeries[i].surgeryTitle,
         surgeonName: leadSurgeon.doctorId.name,
-        orgName: surgeries[i].surgeryOrg,
+        orgName: surgeries[i].belongsTo.organisation,
         img: surgeries[i].thumbnailLink,
       };
       result.push(val);
@@ -187,7 +197,8 @@ router.get("/get-discuss", async (req, res) => {
         path: "discussions.replies.doctorId",
         model: "Doctor",
         select: "name",
-      });
+      })
+      .populate('belongsTo');
     const leadSurgeon = surgery.surgeryTeam.find(
       (doctor) => doctor.role === "Lead Surgeon"
     );
@@ -205,7 +216,7 @@ router.get("/get-discuss", async (req, res) => {
     }));
     const result = {
       date: surgery.surgeryDate,
-      orgName: surgery.surgeryOrg,
+      orgName: surgery.belongsTo.organisation,
       surgeryName: surgery.surgeryTitle,
       surgeonName: leadSurgeon.doctorId.name,
       surgeonTitle: leadSurgeon.doctorId.qualification,
@@ -222,13 +233,13 @@ router.get("/get-discuss", async (req, res) => {
 router.get("/loglog", async (req, res) => {
   try {
     const surgeryid = req.query.id;
-    const surgery = await Surgery.findById(surgeryid);
+    const surgery = await Surgery.findById(surgeryid).populate('belongsTo');
     const leadSurgeon = surgery.surgeryTeam.find(
       (doctor) => doctor.role === "Lead Surgeon"
     );
     const leadSurgeonDetails = await Doctor.findById(leadSurgeon.doctorId);
     const result = {
-      orgName: surgery.surgeryOrg,
+      orgName: surgery.belongsTo.organisation,
       surgeonName: leadSurgeonDetails.name,
       surgeonTitle: leadSurgeonDetails.qualification,
       videoLink: surgery.videoLink,
@@ -326,11 +337,8 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
           newDoctor[i].status = "pending";
           let invite = {
             surgeryId: surgery._id,
-            surgeryName: surgery.surgeryTitle,
-            orgName: surgery.surgeryOrg,
             status: "pending",
             invitedDoctorId: user,
-            invitedDoctorName: editingDoctor.name,
           };
           doctor.invites.push(invite);
           await doctor.save();
@@ -339,7 +347,6 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 
         surgery.surgeryTitle = surgeryData.surgeryName;
         surgery.surgeryDate = surgeryData.surgeryDate;
-        surgery.surgeryOrg = surgeryData.surgeryOrg;
         surgery.surgeryTeam = existingTeam;
         surgery.surgeryVisibility = surgeryData.surgeryVisibility;
         surgery.notes = surgeryData.notes;
@@ -396,7 +403,7 @@ router.get("/editpage-data", grantAccess(), async (req, res) => {
           availableOrgs: orgs,
           surgeryName: surgery.surgeryTitle,
           surgeryDate: surgery.surgeryDate,
-          surgeryOrg: surgery.surgeryOrg,
+          surgeryOrg: orgs,
           surgeryTeam: surgeryTeam,
           surgeryVisibility: surgery.surgeryVisibility,
           notes: notes,
@@ -431,7 +438,6 @@ router.post(
       let {
         surgeryName,
         surgeryDate,
-        surgeryOrg,
         surgeryTeam,
         surgeryVisibility,
         surgeryNote,
@@ -487,17 +493,17 @@ router.post(
           console.error(err);
           return;
         }
-
         console.log("File exists");
       });
 
+      const noteUser = await Doctor.findById(req.user.id);
       // Create
 
       const surgeryLog = new Surgery({
         surgeryTitle: surgeryName,
         videoLink: operationVideoLink,
         thumbnailLink: thumbnailLink,
-        surgeryOrg,
+        belongsTo: noteUser.belongsTo,
         surgeryDate,
         surgeryVisibility,
         transcribeProcess: "pending",
@@ -521,7 +527,7 @@ router.post(
       }
 
       // Notes
-      const noteUser = await Doctor.findById(req.user.id);
+
       if (surgeryNote) {
         let note = {
           note: surgeryNote,

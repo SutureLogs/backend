@@ -51,13 +51,6 @@ const SurgeryLogSchema = new Schema({
 					required: true,
 				},
 				status: String,
-
-				// doctorName: String,
-				// doctorusername: String,
-				// doctorTitle: String,
-				// doctorProfilePic: String,
-
-
 			},
 		],
 	},
@@ -75,7 +68,6 @@ const SurgeryLogSchema = new Schema({
 					type: Schema.Types.ObjectId,
 					ref: "Doctor",
 				},
-				// doctorName: String,
 				replies: {
 					type: [
 						{
@@ -84,7 +76,6 @@ const SurgeryLogSchema = new Schema({
 								type: Schema.Types.ObjectId,
 								ref: "Doctor",
 							},
-							// doctorName: String,
 						},
 					],
 				},
@@ -99,7 +90,6 @@ const SurgeryLogSchema = new Schema({
 					type: Schema.Types.ObjectId,
 					ref: "Doctor",
 				},
-				// doctorName: String,
 			},
 		],
 	},
@@ -107,8 +97,9 @@ const SurgeryLogSchema = new Schema({
 		type: Number,
 		default: 0,
 	},
-	surgeryOrg: {
-		type: String,
+	belongsTo: {
+		type: Schema.Types.ObjectId,
+		ref: "Admin",
 	},
 	surgeryDate: {
 		type: Date,
@@ -120,11 +111,9 @@ const SurgeryLogSchema = new Schema({
 		type: [Number],
 	},
 	videoTimestamps: [Number],
-	surgeryDurationInMins:{
+	surgeryDurationInMins: {
 		type: Number,
-	}
+	},
 });
 
 module.exports = mongoose.model("Surgery", SurgeryLogSchema);
-
-//surgeryorg
