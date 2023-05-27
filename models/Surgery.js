@@ -36,9 +36,6 @@ const SurgeryLogSchema = new Schema({
 		type: Schema.Types.ObjectId,
 		ref: "Patient",
 	},
-	customPatientId: {
-		type: String,
-	},
 	surgeryTeam: {
 		type: [
 			{

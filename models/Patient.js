@@ -5,7 +5,6 @@ const PatientSchema = new Schema({
   customPatientId: {
     type: String,
     required: true,
-    unique: true,
   },
   patientDob: {
     type: Date,
@@ -17,6 +16,10 @@ const PatientSchema = new Schema({
   gender: {
     type: String,
     required: true,
+  },
+  belongsTo: {
+    type: Schema.Types.ObjectId,
+    ref: "Admin",
   },
   patientHistory: {
     type: [

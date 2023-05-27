@@ -9,6 +9,7 @@ var router = express.Router();
 
 var multer = require("multer");
 const storage = require("../utils/multerStorage");
+const Patient = require("../models/Patient");
 const upload = multer({ storage: storage });
 
 router.post("/admin-signup", async (req, res) => {
@@ -242,5 +243,54 @@ router.post("/update-admin-details", grantAccess(), async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+router.post("/create-patient", grantAccess(), async (req, res) => {
+	try {
+		const { patientId, patientAge, patientGender} = req.body;
+    console.log(patientId, patientAge, patientGender);
+
+    const patient = new Patient({
+      customPatientId: patientId,
+      age: patientAge,
+      patientGender: patientGender,
+      belongsTo: req.user.id,
+    });
+    await patient.save();
+    res.status(200).json({ status: "success" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/get-patients", grantAccess(), async (req, res) => {
+  try {
+    const adminid = req.user.id;
+    const patients = await Patient.find({ belongsTo: adminid });
+    res.status(200).json({
+      status: "success",
+      patients,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/edit-patient", grantAccess(), async (req, res) => {
+  try {
+    const { patientId, patientAge, patientGender, customPatientId } = req.body;
+    const patient = await Patient.findById(patientId);
+    patient.age = patientAge;
+    patient.gender = patientGender;
+    patient.customPatientId = customPatientId;
+    await patient.save();
+    res.status(200).json({ status: "success" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 module.exports = router;
