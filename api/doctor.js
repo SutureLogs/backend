@@ -62,13 +62,13 @@ router.get("/portfolio", grantAccess(), async (req, res) => {
   try {
     const userid = req.user.id;
     const doctor = await Doctor.findById(userid).populate(
-      "surgeries invites.surgeryId invites.invitedDoctorId"
+      "surgeries invites.surgeryId invites.invitedDoctorId belongsTo"
     );
 
     const invites = doctor.invites.map((invite) => ({
       logId: invite.surgeryId._id,
       surgeryName: invite.surgeryId.surgeryTitle,
-      orgName: invite.surgeryId.surgeryOrg,
+      orgName: doctor.belongsTo.organisation,
       status: invite.status,
       inviteUser: {
         userID: invite.invitedDoctorId._id,
