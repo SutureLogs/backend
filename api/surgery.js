@@ -720,7 +720,7 @@ router.get("/flashcards", async (req, res) => {
 
 router.get("/browse", async (req, res) => {
   try {
-    const surgeries = await Surgery.find({}).populate("surgeryTeam.doctorId");
+    const surgeries = await Surgery.find({}).populate("surgeryTeam.doctorId").populate('belongsTo');
     let trending = surgeries.slice(0, 2);
     let discover = surgeries.slice(2);
     res.status(200).json({ status: "success", trending, discover });
