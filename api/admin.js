@@ -245,14 +245,14 @@ router.post("/update-admin-details", grantAccess(), async (req, res) => {
 });
 
 router.post("/create-patient", grantAccess(), async (req, res) => {
-	try {
-		const { patientId, patientAge, patientGender} = req.body;
+  try {
+    const { patientId, patientAge, patientGender } = req.body;
     console.log(patientId, patientAge, patientGender);
 
     const patient = new Patient({
       customPatientId: patientId,
       age: patientAge,
-      patientGender: patientGender,
+      gender: patientGender,
       belongsTo: req.user.id,
     });
     await patient.save();
@@ -291,6 +291,5 @@ router.post("/edit-patient", grantAccess(), async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 module.exports = router;
