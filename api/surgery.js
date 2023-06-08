@@ -759,7 +759,17 @@ router.get(
 	"/get-patient-notes/:surgeryId/:patientId",
 	grantAccess(),
 	async (req, res) => {
-		const surgeries = await Surgery.find({patientId: req.params.patientId}).select("surgeryTitle");
+		const surgeries = await Surgery.find({
+			patientId: req.params.patientId,
+		}).select("surgeryTitle");
+
+		const formattedSurgery = surgeries.map((surgery) => {
+			return {
+			  surgeryId: surgery._id,
+			  surgeryName: surgery.surgeryTitle,
+			};
+		  });
+
 		const currentSurgery = await Surgery.findById(req.params.surgeryId)
 			.populate({
 				path: "surgeryTeam.doctorId",
@@ -773,46 +783,45 @@ router.get(
 			})
 			.populate("belongsTo");
 
-    
-    let surgeryTeam = []
-    for(let i=0;i<currentSurgery.surgeryTeam.length;i++){
-      let data ={
-        doctorName : currentSurgery.surgeryTeam[i].doctorId.name,
-        doctorRole : currentSurgery.surgeryTeam[i].role,
-        doctorId : currentSurgery.surgeryTeam[i].doctorId._id,
-      }
-      surgeryTeam.push(data)
-    }
+		let surgeryTeam = [];
+		for (let i = 0; i < currentSurgery.surgeryTeam.length; i++) {
+			let data = {
+				doctorName: currentSurgery.surgeryTeam[i].doctorId.name,
+				doctorRole: currentSurgery.surgeryTeam[i].role,
+				doctorId: currentSurgery.surgeryTeam[i].doctorId._id,
+			};
+			surgeryTeam.push(data);
+		}
 
-    let notes = []
-    for(let i=0;i<currentSurgery.notes.length;i++){
-      let data ={
-        createdAt : currentSurgery.notes[i].createdAt,
-        user: {
-          name: currentSurgery.notes[i].doctorId.name,
-          id: currentSurgery.notes[i].doctorId._id,
-          img: currentSurgery.notes[i].doctorId.profilePicture,
-        },
-        note: currentSurgery.notes[i].note,
-      }
-      notes.push(data)
-    }
-    
+		let notes = [];
+		for (let i = 0; i < currentSurgery.notes.length; i++) {
+			let data = {
+				createdAt: currentSurgery.notes[i].createdAt,
+				user: {
+					name: currentSurgery.notes[i].doctorId.name,
+					id: currentSurgery.notes[i].doctorId._id,
+					img: currentSurgery.notes[i].doctorId.profilePicture,
+				},
+				note: currentSurgery.notes[i].note,
+			};
+			notes.push(data);
+		}
+
 		let currentSurgeryDetail = {
 			surgeryName: currentSurgery.surgeryTitle,
 			surgeryId: currentSurgery._id,
 			surgeryDate: currentSurgery.surgeryDate,
 			organizationName: currentSurgery.belongsTo.organisation,
-      surgicalTeam: surgeryTeam,
+			surgicalTeamName: surgeryTeam,
+		};
+		let result = {
+			surgeries : formattedSurgery,
+			currentSurgeryDetail,
 			patientDetails: {
 				age: currentSurgery.patientId.age,
 				gender: currentSurgery.patientId.gender,
 			},
-      notes: notes,
-		};
-		let result = {
-			surgeries,
-			currentSurgeryDetail,
+			notes: notes,
 		};
 		res.status(200).json({ status: "success", result });
 	}
