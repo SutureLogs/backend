@@ -130,6 +130,7 @@ router.get("/get-logbase", async (req, res) => {
 			surgeonTitle: leadSurgeon.doctorId.qualification,
 			surgeryName: surgery.surgeryTitle,
 			patientDetails: {
+				patientId: surgery.patientId ? surgery.patientId._id : null,
 				age: surgery.patientId
 					? surgery.patientId.age
 					: "Not Specified",
@@ -758,7 +759,7 @@ router.get(
 	"/get-patient-notes/:surgeryId/:patientId",
 	grantAccess(),
 	async (req, res) => {
-		const surgeries = await Surgery.find({}).select("surgeryTitle");
+		const surgeries = await Surgery.find({patientId: req.params.patientId}).select("surgeryTitle");
 		const currentSurgery = await Surgery.findById(req.params.surgeryId)
 			.populate({
 				path: "surgeryTeam.doctorId",
