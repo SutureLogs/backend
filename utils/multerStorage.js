@@ -9,7 +9,21 @@ const storage = multer.diskStorage({
 			["image/png", "image/jpeg", "image/jpg"].includes(file.mimetype)
 		) {
 			cb(null, "./static/profilepicture");
-		} else if (
+		}
+		else if (file.fieldname === "notesPicture" && ["image/png", "image/jpeg", "image/jpg"].includes(file.mimetype)) {
+			cb(null, "./static/thumbnail");
+		}
+		else if (
+			file.fieldname === "notesVideo" &&
+			["video/mp4", "video/avi", "video/mov", "video/mkv"].includes(
+				file.mimetype
+			)
+		)
+		{
+			console.log(file.mimetype);
+			cb(null, "./static/videos");
+		}
+		else if (
 			file.fieldname === "thumbnail" &&
 			["image/png", "image/jpeg", "image/jpg"].includes(file.mimetype)
 		) {
