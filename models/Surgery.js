@@ -82,10 +82,14 @@ const SurgeryLogSchema = new Schema({
 	notes: {
 		type: [
 			{
-				note: String,
+				note: [Object],
 				doctorId: {
 					type: Schema.Types.ObjectId,
 					ref: "Doctor",
+				},
+				createdAt: {
+					type: Date,
+					default: Date.now,
 				},
 			},
 		],
