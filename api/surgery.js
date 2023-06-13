@@ -757,7 +757,7 @@ router.get("/flashcards", async (req, res) => {
 router.get("/browse", grantAccess(), async (req, res) => {
 	try {
 		const userid = req.user.id;
-		const inbrowserDoctor = await Doctor.findById(userid).populate("belongsTo");
+		const inbrowserDoctor = await Doctor.findById(userid)
 		const inbrowseDoctorOrg = inbrowserDoctor.belongsTo
 
 		const doctors = await Doctor.find(
