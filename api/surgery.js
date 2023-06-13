@@ -758,14 +758,15 @@ router.get("/browse", grantAccess(), async (req, res) => {
 	try {
 		const userid = req.user.id;
 		const inbrowserDoctor = await Doctor.findById(userid).populate("belongsTo");
-		const inbrowseDoctorOrg = inbrowserDoctor.belongsTo.organisation;
+		const inbrowseDoctorOrg = inbrowserDoctor.belongsTo
 
 		const doctors = await Doctor.find(
 			{
-				"belongsTo.organisation": inbrowseDoctorOrg,
+				belongsTo: inbrowseDoctorOrg,
+				"_id": { $ne: userid }
 			},
 			"-password"
-		);
+		).populate("department");
 
 		const surgeries = await Surgery.find({})
 			.populate("surgeryTeam.doctorId")
