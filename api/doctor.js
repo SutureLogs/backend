@@ -44,12 +44,22 @@ router.get("/profile", async (req, res) => {
     const doctor = await Doctor.findById(userid)
       .populate("surgeries")
       .populate("belongsTo");
+    
+    let totalLikes = 0;
+    let totalViews = 0;
+    for(let i=0; i<doctor.surgeries.length; i++){
+      totalLikes += doctor.surgeries[i].likesCount;
+      totalViews += doctor.surgeries[i].viewsCount;
+    }
     const result = {
       doctorFullName: doctor.name,
       doctorQualification: doctor.qualification,
       doctorOrganisation: [doctor.belongsTo.organisation],
       doctorImg: doctor.profilePicture,
       surgeries: doctor.surgeries,
+      surgeryCount: doctor.surgeries.length,
+      totalLikes,
+      totalViews,
     };
     res.status(200).json({ status: "success", doctor: result });
   } catch (err) {

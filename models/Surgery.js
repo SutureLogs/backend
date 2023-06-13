@@ -99,6 +99,14 @@ const SurgeryLogSchema = new Schema({
 		type: Number,
 		default: 0,
 	},
+	likedBy: {
+		type: [Schema.Types.ObjectId],
+		ref: "Doctor",
+	},
+	viewsCount: {
+		type: Number,
+		default: 0,
+	},
 	belongsTo: {
 		type: Schema.Types.ObjectId,
 		ref: "Admin",

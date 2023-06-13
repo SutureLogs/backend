@@ -20,8 +20,9 @@ const openai = new OpenAIApi(configuration);
 
 const upload = multer({ storage: storage });
 
-router.get("/get-logbase", async (req, res) => {
+router.get("/get-logbase", grantAccess(), async (req, res) => {
 	try {
+		const userid = req.user.id;
 		const surgeryid = req.query.id;
 		const surgery = await Surgery.findById(surgeryid)
 			.populate({
@@ -121,8 +122,10 @@ router.get("/get-logbase", async (req, res) => {
 			});
 		}
 
+		const isLiked = surgery.likedBy.includes(userid);
 		const result = {
-			likeCount: surgery.likesCount,
+			likesCount: surgery.likesCount,
+			isLiked,
 			orgName: organisation,
 			date: surgery.surgeryDate,
 			notes: notes,
@@ -189,8 +192,9 @@ router.post("/search", async (req, res) => {
 	}
 });
 
-router.get("/get-discuss", async (req, res) => {
+router.get("/get-discuss", grantAccess(), async (req, res) => {
 	try {
+		const userid = req.user.id;
 		const surgeryid = req.query.id;
 		const surgery = await Surgery.findById(surgeryid)
 			.populate({
@@ -224,7 +228,10 @@ router.get("/get-discuss", async (req, res) => {
 			})),
 			surgeryID: surgery._id,
 		}));
+		const isLiked = surgery.likedBy.includes(userid);
 		const result = {
+			likesCount: surgery.likesCount,
+			isLiked,
 			date: surgery.surgeryDate,
 			orgName: surgery.belongsTo.organisation,
 			surgeryName: surgery.surgeryTitle,
@@ -240,15 +247,19 @@ router.get("/get-discuss", async (req, res) => {
 	}
 });
 
-router.get("/loglog", async (req, res) => {
+router.get("/loglog", grantAccess(), async (req, res) => {
 	try {
+		const userid = req.user.id;
 		const surgeryid = req.query.id;
 		const surgery = await Surgery.findById(surgeryid).populate("belongsTo");
 		const leadSurgeon = surgery.surgeryTeam.find(
 			(doctor) => doctor.role === "Lead Surgeon"
 		);
 		const leadSurgeonDetails = await Doctor.findById(leadSurgeon.doctorId);
+		const isLiked = surgery.likedBy.includes(userid);
 		const result = {
+			likesCount: surgery.likesCount,
+			isLiked,
 			orgName: surgery.belongsTo.organisation,
 			surgeonName: leadSurgeonDetails.name,
 			surgeonTitle: leadSurgeonDetails.qualification,
@@ -767,10 +778,10 @@ router.get(
 
 		const formattedSurgery = surgeries.map((surgery) => {
 			return {
-			  surgeryId: surgery._id,
-			  surgeryName: surgery.surgeryTitle,
+				surgeryId: surgery._id,
+				surgeryName: surgery.surgeryTitle,
 			};
-		  });
+		});
 
 		const currentSurgery = await Surgery.findById(req.params.surgeryId)
 			.populate({
@@ -817,7 +828,7 @@ router.get(
 			surgicalTeamName: surgeryTeam,
 		};
 		let result = {
-			surgeries : formattedSurgery,
+			surgeries: formattedSurgery,
 			currentSurgeryDetail,
 			patientDetails: {
 				age: currentSurgery.patientId.age,
@@ -875,6 +886,58 @@ router.post(
 		}
 	}
 );
+
+router.post("/add-like", grantAccess(), async (req, res) => {
+	try {
+		const userid = req.user.id;
+		const surgeryid = req.body.surgeryid;
+		const surgery = await Surgery.findById(surgeryid);
+		if (!surgery.likedBy.includes(userid)) {
+			surgery.likesCount = surgery.likesCount + 1;
+			surgery.likedBy.push(userid);
+			await surgery.save();
+			res.status(200).json({ status: "success" });
+		} else {
+			res.status(200).json({ message: "already liked" });
+		}
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+router.post("/remove-like", grantAccess(), async (req, res) => {
+	try {
+		const userid = req.user.id;
+		const surgeryid = req.body.surgeryid;
+		const surgery = await Surgery.findById(surgeryid);
+		if (surgery.likedBy.includes(userid)) {
+			surgery.likesCount = surgery.likesCount - 1;
+			surgery.likedBy.pull(userid);
+			await surgery.save();
+			res.status(200).json({ status: "success" });
+		} else {
+			res.status(200).json({ message: "user hasn't liked yet" });
+		}
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
+
+router.post("/view-surgery", grantAccess(), async (req, res) => {
+	try {
+		const userid = req.user.id;
+		const surgeryid = req.body.surgeryid;
+		const surgery = await Surgery.findById(surgeryid);
+		surgery.viewsCount = surgery.viewsCount + 1;
+		await surgery.save();
+		res.status(200).json({ status: "success" });
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+});
 
 router.get("/img/:static/:folder/:filername", async (req, res) => {
 	try {
