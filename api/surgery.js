@@ -754,14 +754,25 @@ router.get("/flashcards", async (req, res) => {
 	res.status(200).json({ status: "success", cards: quiz });
 });
 
-router.get("/browse", async (req, res) => {
+router.get("/browse", grantAccess(), async (req, res) => {
 	try {
+		const userid = req.user.id;
+		const inbrowserDoctor = await Doctor.findById(userid).populate("belongsTo");
+		const inbrowseDoctorOrg = inbrowserDoctor.belongsTo.organisation;
+
+		const doctors = await Doctor.find(
+			{
+				"belongsTo.organisation": inbrowseDoctorOrg,
+			},
+			"-password" // Excluding the password field from the query results
+		);
+
 		const surgeries = await Surgery.find({})
 			.populate("surgeryTeam.doctorId")
 			.populate("belongsTo");
 		let trending = surgeries.slice(0, 2);
 		let discover = surgeries.slice(2);
-		res.status(200).json({ status: "success", trending, discover });
+		res.status(200).json({ status: "success", trending, discover, doctors });
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ status: "error" });
