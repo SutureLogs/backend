@@ -523,6 +523,7 @@ router.post(
 				transcribeProcess: "pending",
 				surgeryDurationInMins: Math.round(duration),
 				notes: [],
+				sectionsInVideo: [],
 			});
 
 			// Audio
