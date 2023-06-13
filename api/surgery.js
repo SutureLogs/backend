@@ -764,7 +764,7 @@ router.get("/browse", grantAccess(), async (req, res) => {
 			{
 				"belongsTo.organisation": inbrowseDoctorOrg,
 			},
-			"-password" // Excluding the password field from the query results
+			"-password"
 		);
 
 		const surgeries = await Surgery.find({})
