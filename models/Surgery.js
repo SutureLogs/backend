@@ -53,6 +53,7 @@ const SurgeryLogSchema = new Schema({
 	},
 	surgeryVisibility: {
 		type: String,
+		enum: ["public", "private", "organisation"],
 	},
 	privateList: {
 		type: [String],

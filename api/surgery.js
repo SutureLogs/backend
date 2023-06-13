@@ -255,6 +255,7 @@ router.get("/loglog", async (req, res) => {
 			videoLink: surgery.videoLink,
 			videoTimestamps: surgery.videoTimestamps,
 			transcript: surgery.transcript,
+			sectionsInVideo: surgery.sectionsInVideo,
 			date: surgery.surgeryDate,
 			surgeryName: surgery.surgeryTitle,
 			vitals: surgery.vitals,
