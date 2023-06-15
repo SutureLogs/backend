@@ -57,7 +57,7 @@ router.get("/get-logbase", grantAccess(), async (req, res) => {
 			.populate("belongsTo");
 
 		// ACCESS CONTROL
-		const isAllowed = checkPermission(surgery);
+		const isAllowed = checkPermission(surgery, userid);
 		if (isAllowed) {
 			const organisation = surgery.belongsTo.organisation;
 
@@ -224,7 +224,7 @@ router.get("/get-discuss", grantAccess(), async (req, res) => {
 			})
 			.populate("belongsTo");
 
-		const isAllowed = checkPermission(surgery);
+		const isAllowed = checkPermission(surgery, userid);
 
 		if (isAllowed) {
 			const leadSurgeon = surgery.surgeryTeam.find(
@@ -270,7 +270,7 @@ router.get("/loglog", grantAccess(), async (req, res) => {
 		const surgeryid = req.query.id;
 		const surgery = await Surgery.findById(surgeryid).populate("belongsTo");
 
-		const isAllowed = checkPermission(surgery);
+		const isAllowed = checkPermission(surgery, userid);
 		if (isAllowed) {
 			const leadSurgeon = surgery.surgeryTeam.find(
 				(doctor) => doctor.role === "Lead Surgeon"
@@ -311,7 +311,7 @@ router.post("/add-discussion", grantAccess(), async (req, res) => {
 		const user = req.user.id;
 		const { surgeryId, comment } = req.body;
 		const surgery = await Surgery.findById(surgeryId);
-		const isAllowed = checkPermission(surgery);
+		const isAllowed = checkPermission(surgery, user);
 		if (isAllowed) {
 			surgery.discussions.push({
 				comment: comment,
@@ -335,7 +335,7 @@ router.post("/add-reply", grantAccess(), async (req, res) => {
 		const { surgeryId, discussionId, reply } = req.body;
 		console.log(surgeryId, discussionId, reply);
 		const surgery = await Surgery.findById(surgeryId);
-		const isAllowed = checkPermission(surgery);
+		const isAllowed = checkPermission(surgery, user);
 		if (isAllowed) {
 			for (let sur of surgery.discussions) {
 				if (sur._id.toString() === discussionId) {
@@ -367,7 +367,7 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 			return res.status(200).json({ message: "Surgery not found" });
 		}
 
-		const isAllowed = checkPermission(surgery);
+		const isAllowed = checkPermission(surgery, user);
 		if (!isAllowed) {
 			return res
 				.status(200)

@@ -1,4 +1,4 @@
-async function checkPermission(surgery) {
+async function checkPermission(surgery, userid) {
 	const visibility = surgery.surgeryVisibility;
 
 	let isPrivateAllowed = false;
