@@ -825,7 +825,7 @@ router.get("/browse", grantAccess(), async (req, res) => {
 					surgeryVisibility: "private",
 					$or: [
 						{ "surgeryTeam.doctorId": userid },
-						{ privateList: { $elemMatch: { $eq: userid } } },
+						{ privateList: { $elemMatch: { $eq: inbrowserDoctor.username } } },
 					],
 				},
 			],

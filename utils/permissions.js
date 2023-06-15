@@ -1,3 +1,5 @@
+const Doctor = require("../models/Doctor");
+
 async function checkPermission(surgery, userid) {
 	const visibility = surgery.surgeryVisibility;
 
