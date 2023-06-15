@@ -817,7 +817,19 @@ router.get("/browse", grantAccess(), async (req, res) => {
 			"-password"
 		).populate("department");
 
-		const surgeries = await Surgery.find({})
+		const surgeries = await Surgery.find({
+			$or: [
+				{ surgeryVisibility: "public" },
+				{ surgeryVisibility: "organisation", belongsTo: inbrowseDoctorOrg },
+				{
+					surgeryVisibility: "private",
+					$or: [
+						{ "surgeryTeam.doctorId": userid },
+						{ privateList: { $elemMatch: { $eq: userid } } },
+					],
+				},
+			],
+		})
 			.populate("surgeryTeam.doctorId")
 			.populate("belongsTo");
 		let trending = surgeries.slice(0, 2);
