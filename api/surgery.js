@@ -13,6 +13,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const axios = require("axios");
 const { Configuration, OpenAIApi } = require("openai");
 const Learn = require("../models/Learn");
+const { default: checkPermission } = require("../utils/permissions");
 const configuration = new Configuration({
 	apiKey: process.env.OPEN_API_KEY,
 });
@@ -55,99 +56,108 @@ router.get("/get-logbase", grantAccess(), async (req, res) => {
 			})
 			.populate("belongsTo");
 
-		const organisation = surgery.belongsTo.organisation;
+		// ACCESS CONTROL
+		const isAllowed = checkPermission(surgery);
+		if (isAllowed) {
+			const organisation = surgery.belongsTo.organisation;
 
-		const leadSurgeon = surgery.surgeryTeam.find(
-			(doctor) => doctor.role === "Lead Surgeon"
-		);
-		let team = [];
-		for (let i = 0; i < surgery.surgeryTeam.length; i++) {
-			if (surgery.surgeryTeam[i].status === "accepted") {
-				team.push(surgery.surgeryTeam[i]);
+			const leadSurgeon = surgery.surgeryTeam.find(
+				(doctor) => doctor.role === "Lead Surgeon"
+			);
+			let team = [];
+			for (let i = 0; i < surgery.surgeryTeam.length; i++) {
+				if (surgery.surgeryTeam[i].status === "accepted") {
+					team.push(surgery.surgeryTeam[i]);
+				}
 			}
-		}
 
-		const modifiedTeam = team.map(({ doctorId: id, role }) => {
-			const {
-				name: doctorName,
-				qualification: doctorTitle,
-				username: doctorUsername,
-				profilePicture: doctorProfilePic,
-				_id: doctorId,
-			} = id;
+			const modifiedTeam = team.map(({ doctorId: id, role }) => {
+				const {
+					name: doctorName,
+					qualification: doctorTitle,
+					username: doctorUsername,
+					profilePicture: doctorProfilePic,
+					_id: doctorId,
+				} = id;
 
-			return {
-				doctorName,
-				doctorTitle,
-				doctorUsername,
-				doctorProfilePic,
-				role,
-				doctorId,
-			};
-		});
-		let patientHistory = [];
-
-		if (surgery.patientId && surgery.patientId.patientHistory.length > 0) {
-			patientHistory = surgery.patientId.patientHistory;
-			console.log(patientHistory);
-			patientHistory = patientHistory.map((history) => {
-				const { surgeryId, leadSurgeonId } = history;
-				const { surgeryTitle, belongsTo, surgeryDate } = surgeryId;
-				const { name, qualification } = leadSurgeonId;
-
-				const modifiedHistory = {
-					surgeryName: surgeryTitle,
-					surgeonName: name,
-					surgeonTitle: qualification,
-					surgeryOrg: belongsTo.organisation,
-					surgeryDate,
-				};
-
-				modifiedHistory.surgeryId = surgeryId._id;
-				modifiedHistory.leadSurgeonId = leadSurgeonId._id;
-
-				return modifiedHistory;
-			});
-		}
-
-		let notes = surgery.notes;
-		if (notes.length > 0) {
-			notes = notes.map((note) => {
-				const { name, _id: id } = note.doctorId;
 				return {
-					note: note.note,
-					doctorName: name,
-					doctorId: id,
+					doctorName,
+					doctorTitle,
+					doctorUsername,
+					doctorProfilePic,
+					role,
+					doctorId,
 				};
 			});
-		}
+			let patientHistory = [];
 
-		const isLiked = surgery.likedBy.includes(userid);
-		const result = {
-			likesCount: surgery.likesCount,
-			isLiked,
-			orgName: organisation,
-			date: surgery.surgeryDate,
-			notes: notes,
-			surgeonName: leadSurgeon.doctorId.name,
-			surgeonTitle: leadSurgeon.doctorId.qualification,
-			surgeryName: surgery.surgeryTitle,
-			patientDetails: {
-				patientId: surgery.patientId ? surgery.patientId._id : null,
-				age: surgery.patientId
-					? surgery.patientId.age
-					: "Not Specified",
-				gender: surgery.patientId
-					? surgery.patientId.gender
-					: "Not Specified",
-			},
-			patientHistory: surgery.patientId ? patientHistory : [],
-			surgeryDetails: {
-				team: modifiedTeam,
-				surgeryDurationInMins: surgery.surgeryDurationInMins,
-			},
-		};
-		res.status(200).json({ status: "success", surgery: result });
+			if (
+				surgery.patientId &&
+				surgery.patientId.patientHistory.length > 0
+			) {
+				patientHistory = surgery.patientId.patientHistory;
+				console.log(patientHistory);
+				patientHistory = patientHistory.map((history) => {
+					const { surgeryId, leadSurgeonId } = history;
+					const { surgeryTitle, belongsTo, surgeryDate } = surgeryId;
+					const { name, qualification } = leadSurgeonId;
+
+					const modifiedHistory = {
+						surgeryName: surgeryTitle,
+						surgeonName: name,
+						surgeonTitle: qualification,
+						surgeryOrg: belongsTo.organisation,
+						surgeryDate,
+					};
+
+					modifiedHistory.surgeryId = surgeryId._id;
+					modifiedHistory.leadSurgeonId = leadSurgeonId._id;
+
+					return modifiedHistory;
+				});
+			}
+
+			let notes = surgery.notes;
+			if (notes.length > 0) {
+				notes = notes.map((note) => {
+					const { name, _id: id } = note.doctorId;
+					return {
+						note: note.note,
+						doctorName: name,
+						doctorId: id,
+					};
+				});
+			}
+
+			const isLiked = surgery.likedBy.includes(userid);
+			const result = {
+				likesCount: surgery.likesCount,
+				isLiked,
+				orgName: organisation,
+				date: surgery.surgeryDate,
+				notes: notes,
+				surgeonName: leadSurgeon.doctorId.name,
+				surgeonTitle: leadSurgeon.doctorId.qualification,
+				surgeryName: surgery.surgeryTitle,
+				patientDetails: {
+					patientId: surgery.patientId ? surgery.patientId._id : null,
+					age: surgery.patientId
+						? surgery.patientId.age
+						: "Not Specified",
+					gender: surgery.patientId
+						? surgery.patientId.gender
+						: "Not Specified",
+				},
+				patientHistory: surgery.patientId ? patientHistory : [],
+				surgeryDetails: {
+					team: modifiedTeam,
+					surgeryDurationInMins: surgery.surgeryDurationInMins,
+				},
+			};
+			res.status(200).json({ status: "success", surgery: result });
+		} else {
+			res.status(200).json({ status: "error", message: "Not allowed" });
+		}
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
@@ -213,34 +223,41 @@ router.get("/get-discuss", grantAccess(), async (req, res) => {
 				select: "name",
 			})
 			.populate("belongsTo");
-		const leadSurgeon = surgery.surgeryTeam.find(
-			(doctor) => doctor.role === "Lead Surgeon"
-		);
 
-		const discuss = surgery.discussions.map((discussion) => ({
-			comment: discussion.comment,
-			discussionID: discussion._id,
-			memberName: discussion.doctorId.name,
-			replies: discussion.replies.map((reply) => ({
-				comment: reply.comment,
-				doctorName: reply.doctorId.name,
-				doctorId: reply.doctorId._id,
-			})),
-			surgeryID: surgery._id,
-		}));
-		const isLiked = surgery.likedBy.includes(userid);
-		const result = {
-			likesCount: surgery.likesCount,
-			isLiked,
-			date: surgery.surgeryDate,
-			orgName: surgery.belongsTo.organisation,
-			surgeryName: surgery.surgeryTitle,
-			surgeonName: leadSurgeon.doctorId.name,
-			surgeonTitle: leadSurgeon.doctorId.qualification,
-			videoLink: surgery.videoLink,
-			discussions: discuss,
-		};
-		res.status(200).json({ status: "success", surgery: result });
+		const isAllowed = checkPermission(surgery);
+
+		if (isAllowed) {
+			const leadSurgeon = surgery.surgeryTeam.find(
+				(doctor) => doctor.role === "Lead Surgeon"
+			);
+
+			const discuss = surgery.discussions.map((discussion) => ({
+				comment: discussion.comment,
+				discussionID: discussion._id,
+				memberName: discussion.doctorId.name,
+				replies: discussion.replies.map((reply) => ({
+					comment: reply.comment,
+					doctorName: reply.doctorId.name,
+					doctorId: reply.doctorId._id,
+				})),
+				surgeryID: surgery._id,
+			}));
+			const isLiked = surgery.likedBy.includes(userid);
+			const result = {
+				likesCount: surgery.likesCount,
+				isLiked,
+				date: surgery.surgeryDate,
+				orgName: surgery.belongsTo.organisation,
+				surgeryName: surgery.surgeryTitle,
+				surgeonName: leadSurgeon.doctorId.name,
+				surgeonTitle: leadSurgeon.doctorId.qualification,
+				videoLink: surgery.videoLink,
+				discussions: discuss,
+			};
+			res.status(200).json({ status: "success", surgery: result });
+		} else {
+			res.status(200).json({ status: "error", message: "Not allowed" });
+		}
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
@@ -252,29 +269,37 @@ router.get("/loglog", grantAccess(), async (req, res) => {
 		const userid = req.user.id;
 		const surgeryid = req.query.id;
 		const surgery = await Surgery.findById(surgeryid).populate("belongsTo");
-		const leadSurgeon = surgery.surgeryTeam.find(
-			(doctor) => doctor.role === "Lead Surgeon"
-		);
-		const leadSurgeonDetails = await Doctor.findById(leadSurgeon.doctorId);
-		const isLiked = surgery.likedBy.includes(userid);
-		const result = {
-			likesCount: surgery.likesCount,
-			isLiked,
-			orgName: surgery.belongsTo.organisation,
-			surgeonName: leadSurgeonDetails.name,
-			surgeonTitle: leadSurgeonDetails.qualification,
-			videoLink: surgery.videoLink,
-			videoTimestamps: surgery.videoTimestamps,
-			transcript: surgery.transcript,
-			sectionsInVideo: surgery.sectionsInVideo,
-			date: surgery.surgeryDate,
-			surgeryName: surgery.surgeryTitle,
-			vitals: surgery.vitals,
-			vitalTimestamps: surgery.vitalTimestamps,
-			transcript: surgery.transcript,
-			transcribeProcess: surgery.transcribeProcess,
-		};
-		res.status(200).json({ status: "success", surgery: result });
+
+		const isAllowed = checkPermission(surgery);
+		if (isAllowed) {
+			const leadSurgeon = surgery.surgeryTeam.find(
+				(doctor) => doctor.role === "Lead Surgeon"
+			);
+			const leadSurgeonDetails = await Doctor.findById(
+				leadSurgeon.doctorId
+			);
+			const isLiked = surgery.likedBy.includes(userid);
+			const result = {
+				likesCount: surgery.likesCount,
+				isLiked,
+				orgName: surgery.belongsTo.organisation,
+				surgeonName: leadSurgeonDetails.name,
+				surgeonTitle: leadSurgeonDetails.qualification,
+				videoLink: surgery.videoLink,
+				videoTimestamps: surgery.videoTimestamps,
+				transcript: surgery.transcript,
+				sectionsInVideo: surgery.sectionsInVideo,
+				date: surgery.surgeryDate,
+				surgeryName: surgery.surgeryTitle,
+				vitals: surgery.vitals,
+				vitalTimestamps: surgery.vitalTimestamps,
+				transcript: surgery.transcript,
+				transcribeProcess: surgery.transcribeProcess,
+			};
+			res.status(200).json({ status: "success", surgery: result });
+		} else {
+			res.status(200).json({ status: "error", message: "Not allowed" });
+		}
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
@@ -285,15 +310,19 @@ router.post("/add-discussion", grantAccess(), async (req, res) => {
 	try {
 		const user = req.user.id;
 		const { surgeryId, comment } = req.body;
-		const doctor = await Doctor.findById(user);
 		const surgery = await Surgery.findById(surgeryId);
-		surgery.discussions.push({
-			comment: comment,
-			doctorId: user,
-			replies: [],
-		});
-		await surgery.save();
-		res.status(200).json({ status: "success", surgery: surgery });
+		const isAllowed = checkPermission(surgery);
+		if (isAllowed) {
+			surgery.discussions.push({
+				comment: comment,
+				doctorId: user,
+				replies: [],
+			});
+			await surgery.save();
+			res.status(200).json({ status: "success", surgery: surgery });
+		} else {
+			res.status(200).json({ status: "error", message: "Not allowed" });
+		}
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
@@ -305,19 +334,23 @@ router.post("/add-reply", grantAccess(), async (req, res) => {
 		const user = req.user.id;
 		const { surgeryId, discussionId, reply } = req.body;
 		console.log(surgeryId, discussionId, reply);
-		const doctor = await Doctor.findById(user);
 		const surgery = await Surgery.findById(surgeryId);
-		for (let sur of surgery.discussions) {
-			if (sur._id.toString() === discussionId) {
-				sur.replies.push({
-					comment: reply,
-					doctorId: user,
-				});
+		const isAllowed = checkPermission(surgery);
+		if (isAllowed) {
+			for (let sur of surgery.discussions) {
+				if (sur._id.toString() === discussionId) {
+					sur.replies.push({
+						comment: reply,
+						doctorId: user,
+					});
+				}
 			}
-		}
 
-		await surgery.save();
-		res.status(200).json({ status: "success", surgery: surgery });
+			await surgery.save();
+			res.status(200).json({ status: "success", surgery: surgery });
+		} else {
+			res.status(200).json({ status: "error", message: "Not allowed" });
+		}
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
@@ -330,54 +363,66 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 		const { surgeryData } = req.body;
 
 		const surgery = await Surgery.findById(surgeryData.logId);
-		const editingDoctor = await Doctor.findById(user);
 
 		if (surgery) {
-			let doc = surgery.surgeryTeam.find(
-				(doc) => doc.doctorId.toString() === user
-			);
-			if (!doc) {
-				return res.status(200).json({ message: "Unauthorized" });
-			} else {
-				let newDoctor = [];
-				const existingTeam = surgeryData.surgeryTeam.filter((obj) => {
-					if (obj.doctorId === "") {
-						newDoctor.push(obj);
-						return false;
+			const isAllowed = checkPermission(surgery);
+			if (isAllowed) {
+				let doc = surgery.surgeryTeam.find(
+					(doc) => doc.doctorId.toString() === user
+				);
+				if (!doc) {
+					return res.status(200).json({ message: "Unauthorized" });
+				} else {
+					let newDoctor = [];
+					const existingTeam = surgeryData.surgeryTeam.filter(
+						(obj) => {
+							if (obj.doctorId === "") {
+								newDoctor.push(obj);
+								return false;
+							}
+							return true;
+						}
+					);
+
+					for (let i = 0; i < newDoctor.length; i++) {
+						let doctor = await Doctor.findOne({
+							username: newDoctor[i].doctorusername,
+						});
+						newDoctor[i].doctorId = doctor._id;
+						newDoctor[i].doctorName = doctor.name;
+						newDoctor[i].doctorTitle = doctor.title;
+						newDoctor[i].doctorProfilePic = doctor.profilePicture;
+						newDoctor[i].status = "pending";
+						let invite = {
+							surgeryId: surgery._id,
+							status: "pending",
+							invitedDoctorId: user,
+						};
+						doctor.invites.push(invite);
+						await doctor.save();
+						existingTeam.push(newDoctor[i]);
 					}
-					return true;
-				});
 
-				for (let i = 0; i < newDoctor.length; i++) {
-					let doctor = await Doctor.findOne({
-						username: newDoctor[i].doctorusername,
+					surgery.surgeryTitle = surgeryData.surgeryName;
+					surgery.surgeryDate = surgeryData.surgeryDate;
+					surgery.surgeryTeam = existingTeam;
+					surgery.surgeryVisibility = surgeryData.surgeryVisibility;
+					surgery.notes = surgeryData.notes;
+					if (surgeryData.newNote.note !== "") {
+						surgery.notes.push(surgeryData.newNote);
+					}
+					surgery.privateList = surgeryData.privateList;
+					await surgery.save();
+					res.status(200).json({
+						status: "success",
+						surgery: surgery,
 					});
-					newDoctor[i].doctorId = doctor._id;
-					newDoctor[i].doctorName = doctor.name;
-					newDoctor[i].doctorTitle = doctor.title;
-					newDoctor[i].doctorProfilePic = doctor.profilePicture;
-					newDoctor[i].status = "pending";
-					let invite = {
-						surgeryId: surgery._id,
-						status: "pending",
-						invitedDoctorId: user,
-					};
-					doctor.invites.push(invite);
-					await doctor.save();
-					existingTeam.push(newDoctor[i]);
 				}
-
-				surgery.surgeryTitle = surgeryData.surgeryName;
-				surgery.surgeryDate = surgeryData.surgeryDate;
-				surgery.surgeryTeam = existingTeam;
-				surgery.surgeryVisibility = surgeryData.surgeryVisibility;
-				surgery.notes = surgeryData.notes;
-				if (surgeryData.newNote.note !== "") {
-					surgery.notes.push(surgeryData.newNote);
-				}
-				surgery.privateList = surgeryData.privateList;
-				await surgery.save();
-				res.status(200).json({ status: "success", surgery: surgery });
+			} else {
+				res.status(200).json({
+					status: "error",
+					message: "Not allowed",
+				});
 			}
 		}
 	} catch (error) {
@@ -757,13 +802,13 @@ router.get("/flashcards", async (req, res) => {
 router.get("/browse", grantAccess(), async (req, res) => {
 	try {
 		const userid = req.user.id;
-		const inbrowserDoctor = await Doctor.findById(userid)
-		const inbrowseDoctorOrg = inbrowserDoctor.belongsTo
+		const inbrowserDoctor = await Doctor.findById(userid);
+		const inbrowseDoctorOrg = inbrowserDoctor.belongsTo;
 
 		const doctors = await Doctor.find(
 			{
 				belongsTo: inbrowseDoctorOrg,
-				"_id": { $ne: userid }
+				_id: { $ne: userid },
 			},
 			"-password"
 		).populate("department");
@@ -773,7 +818,12 @@ router.get("/browse", grantAccess(), async (req, res) => {
 			.populate("belongsTo");
 		let trending = surgeries.slice(0, 2);
 		let discover = surgeries.slice(2);
-		res.status(200).json({ status: "success", trending, discover, doctors });
+		res.status(200).json({
+			status: "success",
+			trending,
+			discover,
+			doctors,
+		});
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ status: "error" });
@@ -846,7 +896,7 @@ router.get(
 				age: currentSurgery.patientId.age,
 				gender: currentSurgery.patientId.gender,
 			},
-			notes: notes,
+			notes: notes.reverse(),
 		};
 		res.status(200).json({ status: "success", result });
 	}
@@ -937,9 +987,8 @@ router.post("/remove-like", grantAccess(), async (req, res) => {
 	}
 });
 
-router.post("/view-surgery", grantAccess(), async (req, res) => {
+router.post("/add-view-surgery", grantAccess(), async (req, res) => {
 	try {
-		const userid = req.user.id;
 		const surgeryid = req.body.surgeryid;
 		const surgery = await Surgery.findById(surgeryid);
 		surgery.viewsCount = surgery.viewsCount + 1;
