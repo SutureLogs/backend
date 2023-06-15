@@ -13,7 +13,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const axios = require("axios");
 const { Configuration, OpenAIApi } = require("openai");
 const Learn = require("../models/Learn");
-const { default: checkPermission } = require("../utils/permissions");
+const checkPermission = require("../utils/permissions")
 const configuration = new Configuration({
 	apiKey: process.env.OPEN_API_KEY,
 });
@@ -363,68 +363,72 @@ router.post("/edit-surgery", grantAccess(), async (req, res) => {
 		const { surgeryData } = req.body;
 
 		const surgery = await Surgery.findById(surgeryData.logId);
+		if (!surgery) {
+			return res.status(200).json({ message: "Surgery not found" });
+		}
 
-		if (surgery) {
-			const isAllowed = checkPermission(surgery);
-			if (isAllowed) {
-				let doc = surgery.surgeryTeam.find(
-					(doc) => doc.doctorId.toString() === user
-				);
-				if (!doc) {
-					return res.status(200).json({ message: "Unauthorized" });
-				} else {
-					let newDoctor = [];
-					const existingTeam = surgeryData.surgeryTeam.filter(
-						(obj) => {
-							if (obj.doctorId === "") {
-								newDoctor.push(obj);
-								return false;
-							}
-							return true;
-						}
-					);
+		const isAllowed = checkPermission(surgery);
+		if (!isAllowed) {
+			return res
+				.status(200)
+				.json({ status: "error", message: "Not allowed" });
+		}
 
-					for (let i = 0; i < newDoctor.length; i++) {
-						let doctor = await Doctor.findOne({
-							username: newDoctor[i].doctorusername,
-						});
-						newDoctor[i].doctorId = doctor._id;
-						newDoctor[i].doctorName = doctor.name;
-						newDoctor[i].doctorTitle = doctor.title;
-						newDoctor[i].doctorProfilePic = doctor.profilePicture;
-						newDoctor[i].status = "pending";
-						let invite = {
-							surgeryId: surgery._id,
-							status: "pending",
-							invitedDoctorId: user,
-						};
-						doctor.invites.push(invite);
-						await doctor.save();
-						existingTeam.push(newDoctor[i]);
-					}
+		const doc = surgery.surgeryTeam.find(
+			(doc) => doc.doctorId.toString() === user
+		);
+		if (!doc) {
+			return res.status(200).json({ message: "Unauthorized" });
+		}
 
-					surgery.surgeryTitle = surgeryData.surgeryName;
-					surgery.surgeryDate = surgeryData.surgeryDate;
-					surgery.surgeryTeam = existingTeam;
-					surgery.surgeryVisibility = surgeryData.surgeryVisibility;
-					surgery.notes = surgeryData.notes;
-					if (surgeryData.newNote.note !== "") {
-						surgery.notes.push(surgeryData.newNote);
-					}
-					surgery.privateList = surgeryData.privateList;
-					await surgery.save();
-					res.status(200).json({
-						status: "success",
-						surgery: surgery,
-					});
-				}
-			} else {
-				res.status(200).json({
-					status: "error",
-					message: "Not allowed",
-				});
+		const newDoctor = [];
+		const existingTeam = surgeryData.surgeryTeam.filter((obj) => {
+			if (obj.doctorId === "") {
+				newDoctor.push(obj);
+				return false;
+			}
+			return true;
+		});
+
+		for (const newDoc of newDoctor) {
+			const doctor = await Doctor.findOne({
+				username: newDoc.doctorusername,
+			});
+			if (doctor) {
+				newDoc.doctorId = doctor._id;
+				newDoc.doctorName = doctor.name;
+				newDoc.doctorTitle = doctor.title;
+				newDoc.doctorProfilePic = doctor.profilePicture;
+				newDoc.status = "pending";
+
+				const invite = {
+					surgeryId: surgery._id,
+					status: "pending",
+					invitedDoctorId: user,
+				};
+				doctor.invites.push(invite);
+				await doctor.save();
+				existingTeam.push(newDoc);
 			}
 		}
+
+		surgery.surgeryTitle = surgeryData.surgeryName;
+		surgery.surgeryDate = surgeryData.surgeryDate;
+		surgery.surgeryTeam = existingTeam;
+		surgery.surgeryVisibility = surgeryData.surgeryVisibility;
+		surgery.notes = surgeryData.notes;
+
+		if (surgeryData.newNote.note !== "") {
+			surgery.notes.push(surgeryData.newNote);
+		}
+
+		surgery.privateList = surgeryData.privateList;
+		await surgery.save();
+
+		res.status(200).json({
+			status: "success",
+			surgery: surgery,
+		});
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });

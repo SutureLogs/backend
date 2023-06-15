@@ -28,4 +28,4 @@ async function checkPermission(surgery) {
 		return false;
 	}
 }
-export default checkPermission;
+module.exports = checkPermission;
