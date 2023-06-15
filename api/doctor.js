@@ -51,13 +51,14 @@ router.get("/profile", async (req, res) => {
       totalLikes += doctor.surgeries[i].likesCount;
       totalViews += doctor.surgeries[i].viewsCount;
     }
+    const filteredSurgery = doctor.surgeries.filter(obj => obj.surgeryVisibility === "public");
     const result = {
       doctorFullName: doctor.name,
       doctorQualification: doctor.qualification,
       doctorOrganisation: [doctor.belongsTo.organisation],
       doctorImg: doctor.profilePicture,
-      surgeries: doctor.surgeries,
-      surgeryCount: doctor.surgeries.length,
+      surgeries: filteredSurgery,
+      surgeryCount: filteredSurgery.length,
       totalLikes,
       totalViews,
     };
