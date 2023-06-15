@@ -78,6 +78,7 @@ router.get("/portfolio", grantAccess(), async (req, res) => {
     const invites = doctor.invites.map((invite) => ({
       logId: invite.surgeryId._id,
       surgeryName: invite.surgeryId.surgeryTitle,
+      surgeryVisibility: invite.surgeryId.surgeryVisibility,
       orgName: doctor.belongsTo.organisation,
       status: invite.status,
       inviteUser: {
@@ -95,6 +96,7 @@ router.get("/portfolio", grantAccess(), async (req, res) => {
       logId: surgery._id,
       surgeryName: surgery.surgeryTitle,
       surgeryImage: surgery.thumbnailLink,
+      surgeryVisibility: surgery.surgeryVisibility,
     }));
 
     res.status(200).json({

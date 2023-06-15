@@ -269,9 +269,10 @@ router.get("/loglog", grantAccess(), async (req, res) => {
 		const userid = req.user.id;
 		const surgeryid = req.query.id;
 		const surgery = await Surgery.findById(surgeryid).populate("belongsTo");
-
 		const isAllowed = await checkPermission(surgery, userid);
 		if (isAllowed) {
+			surgery.viewsCount += 1;
+			await surgery.save();
 			const leadSurgeon = surgery.surgeryTeam.find(
 				(doctor) => doctor.role === "Lead Surgeon"
 			);
