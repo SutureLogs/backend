@@ -14,6 +14,8 @@ const SurgeryLogSchema = new Schema({
 		type: String,
 	},
 	transcript: [String],
+	summary : String,
+	keywords : [String],
 	vitals: {
 		type: [
 			{

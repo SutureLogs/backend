@@ -136,6 +136,7 @@ router.get("/get-logbase", grantAccess(), async (req, res) => {
 				orgName: organisation,
 				date: surgery.surgeryDate,
 				notes: notes,
+				summary : surgery.summary,
 				surgeonName: leadSurgeon.doctorId.name,
 				surgeonTitle: leadSurgeon.doctorId.qualification,
 				surgeryName: surgery.surgeryTitle,
