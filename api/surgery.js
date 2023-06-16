@@ -204,16 +204,19 @@ router.post("/search", async (req, res) => {
 
 router.post("/semantic-search", grantAccess(), async (req, res) => {
 	const { searchQuery } = req.body;
+	const dbsurgeries = await Surgery.find({}).populate("surgeryTeam.doctorId").populate("belongsTo");
 	const url = "http://localhost:5000/semantic-search";
 			const headers = {
 				"Content-Type": "application/json",
 			};
 			const body = {
-				searchquery: searchQuery
+				searchquery: searchQuery,
+				dbsurgeries: dbsurgeries
 			};
 			try {
 				const {data} = await axios.post(url, body, { headers });
 				const surgeries = data.surgeries;
+				let result = [];
 				for (let i = 0; i < surgeries.length; i++) {
 					const leadSurgeon = surgeries[i].surgeryTeam.find(
 						(doctor) => doctor.role === "Lead Surgeon"
@@ -222,11 +225,12 @@ router.post("/semantic-search", grantAccess(), async (req, res) => {
 						logID: surgeries[i]._id,
 						surgeryName: surgeries[i].surgeryTitle,
 						surgeonName: leadSurgeon.doctorId.name,
-						orgName: "d",
+						orgName: surgeries[i].belongsTo.organisation,
 						img: surgeries[i].thumbnailLink,
 					};
 					result.push(val);
 				}
+				res.status(200).json({ status: "success", surgeries: result });
 			} catch (err) {
 				console.log(err);
 			}
