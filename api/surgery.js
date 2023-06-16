@@ -13,7 +13,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const axios = require("axios");
 const { Configuration, OpenAIApi } = require("openai");
 const Learn = require("../models/Learn");
-const checkPermission = require("../utils/permissions")
+const checkPermission = require("../utils/permissions");
 const configuration = new Configuration({
 	apiKey: process.env.OPEN_API_KEY,
 });
@@ -204,37 +204,38 @@ router.post("/search", async (req, res) => {
 
 router.post("/semantic-search", grantAccess(), async (req, res) => {
 	const { searchQuery } = req.body;
-	const dbsurgeries = await Surgery.find({}).populate("surgeryTeam.doctorId").populate("belongsTo");
+	const dbsurgeries = await Surgery.find({})
+		.populate("surgeryTeam.doctorId")
+		.populate("belongsTo");
 	const url = "http://localhost:5000/semantic-search";
-			const headers = {
-				"Content-Type": "application/json",
+	const headers = {
+		"Content-Type": "application/json",
+	};
+	const body = {
+		searchquery: searchQuery,
+		dbsurgeries: dbsurgeries,
+	};
+	try {
+		const { data } = await axios.post(url, body, { headers });
+		const surgeries = data.surgeries;
+		let result = [];
+		for (let i = 0; i < surgeries.length; i++) {
+			const leadSurgeon = surgeries[i].surgeryTeam.find(
+				(doctor) => doctor.role === "Lead Surgeon"
+			);
+			const val = {
+				logID: surgeries[i]._id,
+				surgeryName: surgeries[i].surgeryTitle,
+				surgeonName: leadSurgeon.doctorId.name,
+				orgName: surgeries[i].belongsTo.organisation,
+				img: surgeries[i].thumbnailLink,
 			};
-			const body = {
-				searchquery: searchQuery,
-				dbsurgeries: dbsurgeries
-			};
-			try {
-				const {data} = await axios.post(url, body, { headers });
-				const surgeries = data.surgeries;
-				let result = [];
-				for (let i = 0; i < surgeries.length; i++) {
-					const leadSurgeon = surgeries[i].surgeryTeam.find(
-						(doctor) => doctor.role === "Lead Surgeon"
-					);
-					const val = {
-						logID: surgeries[i]._id,
-						surgeryName: surgeries[i].surgeryTitle,
-						surgeonName: leadSurgeon.doctorId.name,
-						orgName: surgeries[i].belongsTo.organisation,
-						img: surgeries[i].thumbnailLink,
-					};
-					result.push(val);
-				}
-				res.status(200).json({ status: "success", surgeries: result });
-			} catch (err) {
-				console.log(err);
-			}
-
+			result.push(val);
+		}
+		res.status(200).json({ status: "success", surgeries: result });
+	} catch (err) {
+		console.log(err);
+	}
 });
 
 router.get("/get-discuss", grantAccess(), async (req, res) => {
@@ -856,12 +857,19 @@ router.get("/browse", grantAccess(), async (req, res) => {
 		const surgeries = await Surgery.find({
 			$or: [
 				{ surgeryVisibility: "public" },
-				{ surgeryVisibility: "organisation", belongsTo: inbrowseDoctorOrg },
+				{
+					surgeryVisibility: "organisation",
+					belongsTo: inbrowseDoctorOrg,
+				},
 				{
 					surgeryVisibility: "private",
 					$or: [
 						{ "surgeryTeam.doctorId": userid },
-						{ privateList: { $elemMatch: { $eq: inbrowserDoctor.username } } },
+						{
+							privateList: {
+								$elemMatch: { $eq: inbrowserDoctor.username },
+							},
+						},
 					],
 				},
 			],
