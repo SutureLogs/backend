@@ -210,16 +210,16 @@ router.post("/semantic-search", async (req, res) => {
 
 	if (searchQuery === "") {
 		let result = [];
-		for (let i = 0; i < surgeries.length; i++) {
-			const leadSurgeon = surgeries[i].surgeryTeam.find(
+		for (let i = 0; i < dbsurgeries.length; i++) {
+			const leadSurgeon = dbsurgeries[i].surgeryTeam.find(
 				(doctor) => doctor.role === "Lead Surgeon"
 			);
 			const val = {
-				logID: surgeries[i]._id,
-				surgeryName: surgeries[i].surgeryTitle,
+				logID: dbsurgeries[i]._id,
+				surgeryName: dbsurgeries[i].surgeryTitle,
 				surgeonName: leadSurgeon.doctorId.name,
-				orgName: surgeries[i].belongsTo.organisation,
-				img: surgeries[i].thumbnailLink,
+				orgName: dbsurgeries[i].belongsTo.organisation,
+				img: dbsurgeries[i].thumbnailLink,
 			};
 			result.push(val);
 		}
