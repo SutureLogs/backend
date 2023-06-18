@@ -224,7 +224,8 @@ router.post("/semantic-search", async (req, res) => {
 			};
 			result.push(val);
 		}
-		res.status(200).json({ status: "success", surgeries: result });
+		const sliced = result.slice(0, 2);
+		res.status(200).json({ status: "success", surgeries: sliced });
 	} 
 	else {
 		const url = "http://localhost:5000/semantic-search";
