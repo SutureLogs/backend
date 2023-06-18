@@ -898,8 +898,8 @@ router.get("/browse", grantAccess(), async (req, res) => {
 		})
 			.populate("surgeryTeam.doctorId")
 			.populate("belongsTo");
-		let trending = surgeries.slice(0, 2);
-		let discover = surgeries.slice(2);
+		let trending = surgeries.slice(0, 4);
+		let discover = surgeries.slice(4);
 		res.status(200).json({
 			status: "success",
 			trending,
