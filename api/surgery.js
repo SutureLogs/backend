@@ -947,6 +947,7 @@ router.get(
 				doctorName: currentSurgery.surgeryTeam[i].doctorId.name,
 				doctorRole: currentSurgery.surgeryTeam[i].role,
 				doctorId: currentSurgery.surgeryTeam[i].doctorId._id,
+				doctorImg: currentSurgery.surgeryTeam[i].doctorId.profilePicture,
 			};
 			surgeryTeam.push(data);
 		}
