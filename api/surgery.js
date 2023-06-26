@@ -14,6 +14,7 @@ const axios = require("axios");
 const { Configuration, OpenAIApi } = require("openai");
 const Learn = require("../models/Learn");
 const checkPermission = require("../utils/permissions");
+const extractJsonSubstring = require("../utils/extractJSON");
 const configuration = new Configuration({
 	apiKey: process.env.OPEN_API_KEY,
 });
@@ -866,12 +867,6 @@ router.get("/get-scenario", async (req, res) => {
 	const surgeryId = req.query.id;
 	const surgery = await Surgery.findById(surgeryId);
 
-	if (surgery.scenarios.cached) {
-		res.status(200).json({
-			status: "success",
-			scenarios: surgery.scenarios,
-		});
-	}
 
 	let textData = "";
 	for (let i = 0; i < surgery.transcript.length; i++) {
@@ -924,12 +919,6 @@ router.post("/check-scenario-answer", async (req, res) => {
 	const { surgeryId, answer, scenario, question } = req.body;
 	const surgery = await Surgery.findById(surgeryId);
 
-	if (surgery.scenarios.cached) {
-		res.status(200).json({
-			status: "success",
-			scenarios: surgery.scenarios,
-		});
-	}
 
 	let textData = "";
 	for (let i = 0; i < surgery.transcript.length; i++) {
@@ -952,29 +941,29 @@ router.post("/check-scenario-answer", async (req, res) => {
 		verdict: "",
 		explanation: "",
 	};
-	textData = "Transcript - " + textData;
+	textData = "Transcript - " + textData + "; Scenario - " + scenario + "; Question - " + question + "; Answer - " + answer;
 	const ask =
-		`{ \"scenario\" : \" ${scenario} \" , \"question\" : \"${question}\", \"answer\" : \"${answer}\"}\nGiven above is the description of a surgery, a fake scenario along with a What would you do question and a surgeons answer to that scenario question. Task : Check if the answer is correct with respect to the question, scenario, and the surgery description itself by giving the verdict as Correct, Not correct, Close, Not really, etc and then generate the correct explanation or more details that was missing from the answer. Output in the following JSON Format : { \"verdict\" : \"....\" , \"explanation\" : \"...\" }\nRules : 1. JSON must not be stringified. 2. Your response must not have anything else apart from the JSON.`;
+		`; Given above is the description of a surgery, a scenario along with a question and a surgeons answer to that scenario question. 
+		Task : Check if the answer is correct with respect to the question, scenario, and the surgery description.
+		Output in the following JSON Format : { verdict : "small sentence about the answer given by surgeon is right or wrong" , explanation: "explain how different the surgeons answer is from the correct answer, add any missing points from the surgery description" }
+		Rules : 1. JSON must be stringified. 2. Your response must not have anything else apart from the JSON.
+		`;
 	const prompt = textData + ask;
 	console.log(prompt);
-	while (true) {
-		let response = await callGpt(prompt);
-		let x = response
-			.replace(/\n/g, "")
-			.replace(/\r/g, "")
-			.replace(/\t/g, "");
-		try {
-			let y = JSON.parse(x);
-			if (y.verdict.length > 0 && y.explanation.length > 0) {
-				scen.explanation = y.explanation;
-				scen.verdict = y.verdict;
-				break;
-			}
-		} catch (error) {}
+	let res1 = await callGpt(prompt);
+	console.log(res1)
+	let response = extractJsonSubstring(res1)
+	console.log(typeof response)
+	response = JSON.parse(response)
+	console.log(typeof response)
+
+	if (response.verdict.length > 0 && response.explanation.length > 0) {
+		scen.explanation = response.explanation;
+		scen.verdict = response.verdict;
 	}
+	
 	surgery.scenarios.explanation = scen.explanation;
 	surgery.scenarios.verdict = scen.verdict;
-	surgery.scenarios.cached = true;
 	await surgery.save();
 	res.status(200).json({ status: "success", scenarios: surgery.scenarios });
 });
