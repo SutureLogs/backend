@@ -14,8 +14,8 @@ const SurgeryLogSchema = new Schema({
 		type: String,
 	},
 	transcript: [String],
-	summary : String,
-	keywords : [String],
+	summary: String,
+	keywords: [String],
 	vitals: {
 		type: [
 			{
@@ -126,6 +126,20 @@ const SurgeryLogSchema = new Schema({
 	surgeryDurationInMins: {
 		type: Number,
 	},
+	scenarios: {
+		scenario: String,
+		question: String,
+		answer: String,
+		verdict: String,
+		explanation: String,
+		cached: Boolean,
+	},
 });
+
+/*
+1st call - take the transcript -> scenario and question
+2nd call from frontend - > scenario and question + answer -> query chatgpt with transcript scenario and question + answer 
+3rd call to frontend -> transcript scenario and question + answer + verdict
+*/
 
 module.exports = mongoose.model("Surgery", SurgeryLogSchema);
