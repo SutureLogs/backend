@@ -14,6 +14,7 @@ const axios = require("axios");
 const { Configuration, OpenAIApi } = require("openai");
 const Learn = require("../models/Learn");
 const checkPermission = require("../utils/permissions");
+const extractJsonSubstring = require("../utils/extractJSON");
 const configuration = new Configuration({
 	apiKey: process.env.OPEN_API_KEY,
 });
@@ -136,7 +137,7 @@ router.get("/get-logbase", grantAccess(), async (req, res) => {
 				orgName: organisation,
 				date: surgery.surgeryDate,
 				notes: notes,
-				summary : surgery.summary,
+				summary: surgery.summary,
 				surgeonName: leadSurgeon.doctorId.name,
 				surgeonTitle: leadSurgeon.doctorId.qualification,
 				surgeryName: surgery.surgeryTitle,
@@ -225,8 +226,7 @@ router.post("/semantic-search", async (req, res) => {
 			result.push(val);
 		}
 		res.status(200).json({ status: "success", surgeries: result });
-	} 
-	else {
+	} else {
 		const url = "http://localhost:5000/semantic-search";
 		const headers = {
 			"Content-Type": "application/json",
@@ -863,6 +863,112 @@ router.get("/flashcards", async (req, res) => {
 	res.status(200).json({ status: "success", cards: quiz });
 });
 
+router.get("/get-scenario", async (req, res) => {
+	const surgeryId = req.query.id;
+	const surgery = await Surgery.findById(surgeryId);
+
+
+	let textData = "";
+	for (let i = 0; i < surgery.transcript.length; i++) {
+		textData += surgery.transcript[i] + " ";
+	}
+
+	const callGpt = async (prompt) => {
+		const response = await openai.createCompletion({
+			model: "text-davinci-003",
+			prompt: prompt,
+			temperature: 0.7,
+			max_tokens: 3170,
+			top_p: 1,
+			frequency_penalty: 0,
+			presence_penalty: 0,
+		});
+		return response.data.choices[0].text;
+	};
+	let scen = {
+		scenario: "",
+		question: "",
+	};
+	textData = "Transcript - " + textData;
+	const ask =
+		'Given above is the description of a surgery. Task : Generate a fake scenario from the above surgery and ask a "What would you do?" question for the fake scenario\nOutput in the following JSON Format : { "scenario" : "The fake scenario" , "question" : "What would you do question" }\nRules : 1. JSON must not be stringified. 2. Your response must not have anything else apart from the JSON.';
+	const prompt = textData + ask;
+	console.log(prompt);
+	while (true) {
+		let response = await callGpt(prompt);
+		let x = response
+			.replace(/\n/g, "")
+			.replace(/\r/g, "")
+			.replace(/\t/g, "");
+		try {
+			let y = JSON.parse(x);
+			if (y.scenario.length > 0 && y.question.length > 0) {
+				scen.scenario = y.scenario;
+				scen.question = y.question;
+				break;
+			}
+		} catch (error) {}
+	}
+	surgery.scenarios.question = scen.question;
+	surgery.scenarios.scenario = scen.scenario;
+	await surgery.save();
+	res.status(200).json({ status: "success", scenarios: scen });
+});
+
+router.post("/check-scenario-answer", async (req, res) => {
+	const { surgeryId, answer, scenario, question } = req.body;
+	const surgery = await Surgery.findById(surgeryId);
+
+
+	let textData = "";
+	for (let i = 0; i < surgery.transcript.length; i++) {
+		textData += surgery.transcript[i] + " ";
+	}
+
+	const callGpt = async (prompt) => {
+		const response = await openai.createCompletion({
+			model: "text-davinci-003",
+			prompt: prompt,
+			temperature: 0.7,
+			max_tokens: 3170,
+			top_p: 1,
+			frequency_penalty: 0,
+			presence_penalty: 0,
+		});
+		return response.data.choices[0].text;
+	};
+	let scen = {
+		verdict: "",
+		explanation: "",
+	};
+	textData = "Transcript - " + textData + "; Scenario - " + scenario + "; Question - " + question + "; Answer - " + answer;
+	const ask =
+		`; Given above is the description of a surgery, a scenario along with a question and a surgeons answer to that scenario question. 
+		Task : Check if the answer is correct with respect to the question, scenario, and the surgery description.
+		Output in the following JSON Format : { verdict : "small sentence about the answer given by surgeon is right or wrong" , explanation: "explain how different the surgeons answer is from the correct answer, add any missing points from the surgery description" }
+		Rules : 1. JSON must be stringified. 2. Your response must not have anything else apart from the JSON.
+		`;
+	const prompt = textData + ask;
+	console.log(prompt);
+	let res1 = await callGpt(prompt);
+	console.log(res1)
+	let response = extractJsonSubstring(res1)
+	console.log(typeof response)
+	response = JSON.parse(response)
+	console.log(typeof response)
+
+	if (response.verdict.length > 0 && response.explanation.length > 0) {
+		scen.explanation = response.explanation;
+		scen.verdict = response.verdict;
+	}
+	
+	surgery.scenarios.explanation = scen.explanation;
+	surgery.scenarios.verdict = scen.verdict;
+	await surgery.save();
+	res.status(200).json({ status: "success", scenarios: surgery.scenarios });
+});
+
+
 router.get("/browse", grantAccess(), async (req, res) => {
 	try {
 		const userid = req.user.id;
@@ -947,7 +1053,8 @@ router.get(
 				doctorName: currentSurgery.surgeryTeam[i].doctorId.name,
 				doctorRole: currentSurgery.surgeryTeam[i].role,
 				doctorId: currentSurgery.surgeryTeam[i].doctorId._id,
-				doctorImg: currentSurgery.surgeryTeam[i].doctorId.profilePicture,
+				doctorImg:
+					currentSurgery.surgeryTeam[i].doctorId.profilePicture,
 			};
 			surgeryTeam.push(data);
 		}
